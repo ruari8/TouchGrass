@@ -13,7 +13,7 @@ struct RootView: View {
         VStack(spacing: 0) {
             // Main Content Area
             ZStack {
-                Color(red: 0.96, green: 0.96, blue: 0.95).ignoresSafeArea()
+                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
                 
                 switch selectedTab {
                 case .session: SessionView()
@@ -30,10 +30,9 @@ struct RootView: View {
             }
             .padding(.top, 12)
             .padding(.bottom, 8)
-            .background(Color.white)
+            .background(Color(UIColor.secondarySystemGroupedBackground))
             .shadow(color: Color.black.opacity(0.05), radius: 10, y: -5)
         }
-        .preferredColorScheme(.light)
         .task {
             await container.refresh()
         }
@@ -58,7 +57,7 @@ private struct TabButton: View {
                 Text(title)
                     .font(.system(size: 10, weight: .medium, design: .rounded))
             }
-            .foregroundColor(selectedTab == tab ? .black : .gray.opacity(0.6))
+            .foregroundColor(selectedTab == tab ? .primary : .secondary)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 8)
         }
@@ -75,10 +74,10 @@ private struct SessionView: View {
             HStack {
                 Text("BlockOS")
                     .font(.system(size: 20, weight: .semibold, design: .rounded))
-                    .foregroundColor(.black)
+                    .foregroundColor(.primary)
                 Spacer()
                 Circle()
-                    .fill(container.activeSession != nil ? Color.green : Color.gray.opacity(0.3))
+                    .fill(container.activeSession != nil ? Color.green : Color.secondary.opacity(0.3))
                     .frame(width: 8, height: 8)
             }
             .padding(.horizontal, 24)
@@ -125,20 +124,20 @@ private struct ActiveSessionView: View {
             VStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(Color.black.opacity(0.03))
+                        .fill(Color.primary.opacity(0.05))
                         .frame(width: 120, height: 120)
                     Image(systemName: "lock.fill")
                         .font(.system(size: 40))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                 }
                 
                 VStack(spacing: 4) {
                     Text("Focus is Active")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                     Text("Selected apps are currently hidden.")
                         .font(.system(size: 15, weight: .regular, design: .rounded))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 }
             }
@@ -153,7 +152,7 @@ private struct ActiveSessionView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Need to unlock?")
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                     
                     if session.state == .activeBlocked {
                         ActionCard(
@@ -176,15 +175,15 @@ private struct ActiveSessionView: View {
                             HStack {
                                 Image(systemName: "qrcode.viewfinder")
                                     .font(.system(size: 24))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.primary)
                                 Text("Ready to scan your physical QR code.")
                                     .font(.system(size: 15, weight: .medium, design: .rounded))
-                                    .foregroundColor(.black)
+                                    .foregroundColor(.primary)
                                 Spacer()
                             }
                             .padding(20)
-                            .background(Color.white, in: RoundedRectangle(cornerRadius: 16))
-                            .shadow(color: Color.black.opacity(0.03), radius: 10, y: 5)
+                            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
+                            .shadow(color: Color.black.opacity(0.05), radius: 10, y: 5)
                             
                             ElegantButton(title: "Cancel Unlock", isPrimary: false) {
                                 Task { await container.cancelUnlock() }
@@ -218,21 +217,21 @@ private struct SetupSessionView: View {
             VStack(spacing: 12) {
                 ZStack {
                     Circle()
-                        .fill(Color.white)
+                        .fill(Color(UIColor.secondarySystemGroupedBackground))
                         .frame(width: 120, height: 120)
-                        .shadow(color: Color.black.opacity(0.03), radius: 20, y: 10)
+                        .shadow(color: Color.black.opacity(0.05), radius: 20, y: 10)
                     Image(systemName: "iphone.slash")
                         .font(.system(size: 40, weight: .light))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                 }
                 
                 VStack(spacing: 4) {
                     Text("Reclaim your time.")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                     Text("Block distracting apps and create healthy friction.")
                         .font(.system(size: 15, weight: .regular, design: .rounded))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                         .padding(.horizontal, 20)
                 }
@@ -245,7 +244,7 @@ private struct SetupSessionView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Step 1")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                             .textCase(.uppercase)
                         
                         ActionCard(
@@ -261,40 +260,40 @@ private struct SetupSessionView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Configuration")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                             .textCase(.uppercase)
                         
                         Button(action: { isPickerPresented = true }) {
                             HStack(spacing: 16) {
                                 ZStack {
-                                    Circle().fill(Color.black.opacity(0.05)).frame(width: 40, height: 40)
-                                    Image(systemName: "app.badge.checkmark").foregroundColor(.black)
+                                    Circle().fill(Color.primary.opacity(0.05)).frame(width: 40, height: 40)
+                                    Image(systemName: "app.badge.checkmark").foregroundColor(.primary)
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("Apps to Block")
                                         .font(.system(size: 16, weight: .semibold, design: .rounded))
-                                        .foregroundColor(.black)
+                                        .foregroundColor(.primary)
                                     
                                     if !container.makePreviewTargets().isEmpty {
                                         Text(container.selectionSummary)
                                             .font(.system(size: 13, weight: .medium, design: .rounded))
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.secondary)
                                             .lineLimit(1)
                                     } else {
                                         Text("Tap to select apps")
                                             .font(.system(size: 13, weight: .regular, design: .rounded))
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.secondary)
                                     }
                                 }
                                 Spacer()
                                 Image(systemName: "chevron.right")
                                     .font(.system(size: 14, weight: .semibold))
-                                    .foregroundColor(.gray.opacity(0.5))
+                                    .foregroundColor(.secondary.opacity(0.5))
                             }
                             .padding(16)
-                            .background(Color.white, in: RoundedRectangle(cornerRadius: 20))
-                            .shadow(color: Color.black.opacity(0.02), radius: 10, y: 5)
+                            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
+                            .shadow(color: Color.black.opacity(0.05), radius: 10, y: 5)
                         }
                     }
                 }
@@ -331,11 +330,11 @@ private struct TimerUnlockElegant: View {
                     Text(timeString(for: remaining))
                         .font(.system(size: 72, weight: .medium, design: .rounded))
                         .monospacedDigit()
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                     
                     Text("Breathe. Do you really need to open this?")
                         .font(.system(size: 15, weight: .regular, design: .rounded))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                 }
                 .padding(.vertical, 32)
                 
@@ -348,14 +347,14 @@ private struct TimerUnlockElegant: View {
                         ProgressView()
                         Text("Unlocking...")
                             .font(.system(size: 15, weight: .medium, design: .rounded))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
                     .padding()
                 }
             }
             .frame(maxWidth: .infinity)
-            .background(Color.white, in: RoundedRectangle(cornerRadius: 32))
-            .shadow(color: Color.black.opacity(0.03), radius: 20, y: 10)
+            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 32))
+            .shadow(color: Color.black.opacity(0.05), radius: 20, y: 10)
             .onChange(of: remaining <= 0) { _, hasElapsed in
                 guard hasElapsed, !didTriggerCompletion else { return }
                 didTriggerCompletion = true
@@ -383,30 +382,30 @@ private struct ActionCard: View {
             HStack(spacing: 16) {
                 ZStack {
                     Circle()
-                        .fill(Color.black.opacity(0.04))
+                        .fill(Color.primary.opacity(0.04))
                         .frame(width: 48, height: 48)
                     Image(systemName: icon)
                         .font(.system(size: 20, weight: .medium))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                 }
                 
                 VStack(alignment: .leading, spacing: 2) {
                     Text(title)
                         .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        .foregroundColor(.black)
+                        .foregroundColor(.primary)
                     Text(subtitle)
                         .font(.system(size: 13, weight: .regular, design: .rounded))
-                        .foregroundColor(.gray)
+                        .foregroundColor(.secondary)
                         .multilineTextAlignment(.leading)
                 }
                 Spacer()
                 Image(systemName: "chevron.right")
                     .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.gray.opacity(0.3))
+                    .foregroundColor(.secondary.opacity(0.3))
             }
             .padding(16)
-            .background(Color.white, in: RoundedRectangle(cornerRadius: 20))
-            .shadow(color: Color.black.opacity(0.02), radius: 10, y: 5)
+            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
+            .shadow(color: Color.black.opacity(0.05), radius: 10, y: 5)
         }
     }
 }
@@ -425,15 +424,15 @@ private struct ElegantButton: View {
                 .padding(.vertical, 18)
                 .background(
                     isPrimary 
-                        ? (isDisabled ? Color.black.opacity(0.3) : Color.black) 
+                        ? (isDisabled ? Color.primary.opacity(0.3) : Color.primary) 
                         : Color.clear
                 )
                 .foregroundColor(
-                    isPrimary ? .white : .black
+                    isPrimary ? Color(UIColor.systemBackground) : .primary
                 )
                 .overlay(
                     RoundedRectangle(cornerRadius: 16)
-                        .stroke(isPrimary ? Color.clear : Color.black.opacity(0.1), lineWidth: 1.5)
+                        .stroke(isPrimary ? Color.clear : Color.primary.opacity(0.1), lineWidth: 1.5)
                 )
                 .clipShape(RoundedRectangle(cornerRadius: 16))
         }
@@ -455,7 +454,7 @@ private struct QRCodesView: View {
             
             Text("Print and place QR codes away from your typical phone scrolling spots.")
                 .font(.system(size: 15, weight: .regular, design: .rounded))
-                .foregroundColor(.gray)
+                .foregroundColor(.secondary)
                 .padding(.horizontal, 24)
                 .padding(.bottom, 24)
             
@@ -465,14 +464,14 @@ private struct QRCodesView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Create New Code")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                             .textCase(.uppercase)
                         
                         VStack(spacing: 16) {
                             TextField("E.g., Kitchen Fridge, Car Dashboard", text: $newLabel)
                                 .font(.system(size: 16, design: .rounded))
                                 .padding()
-                                .background(Color.black.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
+                                .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 12))
                             
                             ElegantButton(title: "Generate QR Code", isPrimary: true, isDisabled: newLabel.isEmpty) {
                                 Task { 
@@ -482,7 +481,7 @@ private struct QRCodesView: View {
                             }
                         }
                         .padding(20)
-                        .background(Color.white, in: RoundedRectangle(cornerRadius: 24))
+                        .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24))
                         .shadow(color: Color.black.opacity(0.02), radius: 10, y: 5)
                     }
                     
@@ -490,21 +489,21 @@ private struct QRCodesView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Your Codes")
                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                             .textCase(.uppercase)
                         
                         if container.qrTokens.isEmpty {
                             VStack(spacing: 12) {
                                 Image(systemName: "qrcode")
                                     .font(.system(size: 32))
-                                    .foregroundColor(.gray.opacity(0.5))
+                                    .foregroundColor(.secondary.opacity(0.5))
                                 Text("No codes created yet.")
                                     .font(.system(size: 15, design: .rounded))
-                                    .foregroundColor(.gray)
+                                    .foregroundColor(.secondary)
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 40)
-                            .background(Color.white, in: RoundedRectangle(cornerRadius: 24))
+                            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24))
                             .shadow(color: Color.black.opacity(0.02), radius: 10, y: 5)
                         } else {
                             VStack(spacing: 12) {
@@ -512,11 +511,11 @@ private struct QRCodesView: View {
                                     HStack(spacing: 16) {
                                         ZStack {
                                             RoundedRectangle(cornerRadius: 12)
-                                                .fill(Color.black.opacity(0.04))
+                                                .fill(Color.primary.opacity(0.04))
                                                 .frame(width: 56, height: 56)
                                             Image(systemName: "qrcode")
                                                 .font(.system(size: 24))
-                                                .foregroundColor(.black)
+                                                .foregroundColor(.primary)
                                         }
                                         
                                         VStack(alignment: .leading, spacing: 4) {
@@ -524,7 +523,7 @@ private struct QRCodesView: View {
                                                 .font(.system(size: 16, weight: .semibold, design: .rounded))
                                             Text("Scanned \(token.lastScannedAt?.formatted(date: .abbreviated, time: .omitted) ?? "Never")")
                                                 .font(.system(size: 13, weight: .regular, design: .rounded))
-                                                .foregroundColor(.gray)
+                                                .foregroundColor(.secondary)
                                         }
                                         Spacer()
                                         
@@ -536,12 +535,12 @@ private struct QRCodesView: View {
                                             .font(.system(size: 12, weight: .bold, design: .rounded))
                                             .padding(.horizontal, 12)
                                             .padding(.vertical, 6)
-                                            .background(Color.black, in: Capsule())
-                                            .foregroundColor(.white)
+                                            .background(Color.primary, in: Capsule())
+                                            .foregroundColor(Color(UIColor.systemBackground))
                                         }
                                     }
                                     .padding(16)
-                                    .background(Color.white, in: RoundedRectangle(cornerRadius: 20))
+                                    .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
                                     .shadow(color: Color.black.opacity(0.02), radius: 10, y: 5)
                                 }
                             }
@@ -571,10 +570,10 @@ private struct HistoryView: View {
                     VStack(spacing: 12) {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 32))
-                            .foregroundColor(.gray.opacity(0.5))
+                            .foregroundColor(.secondary.opacity(0.5))
                         Text("No completed sessions yet.")
                             .font(.system(size: 15, design: .rounded))
-                            .foregroundColor(.gray)
+                            .foregroundColor(.secondary)
                     }
                     .frame(maxWidth: .infinity)
                     .padding(.vertical, 60)
@@ -588,7 +587,7 @@ private struct HistoryView: View {
                                             .font(.system(size: 16, weight: .semibold, design: .rounded))
                                         Text(session.startedAt.formatted(date: .abbreviated, time: .shortened))
                                             .font(.system(size: 13, weight: .regular, design: .rounded))
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.secondary)
                                     }
                                     Spacer()
                                     Circle()
@@ -606,28 +605,28 @@ private struct HistoryView: View {
                                     VStack(alignment: .leading, spacing: 8) {
                                         Text("Unlocks")
                                             .font(.system(size: 12, weight: .bold, design: .rounded))
-                                            .foregroundColor(.gray)
+                                            .foregroundColor(.secondary)
                                             .textCase(.uppercase)
                                         
                                         ForEach(session.unlockHistory, id: \.id) { attempt in
                                             HStack(spacing: 8) {
                                                 Image(systemName: attempt.method == .timer120 ? "timer" : "qrcode")
                                                     .font(.system(size: 12))
-                                                    .foregroundColor(.gray)
+                                                    .foregroundColor(.secondary)
                                                 Text(attempt.method.displayName)
                                                     .font(.system(size: 14, weight: .medium, design: .rounded))
                                                 Spacer()
                                                 Text(attempt.outcome.displayName)
                                                     .font(.system(size: 13, weight: .medium, design: .rounded))
-                                                    .foregroundColor(attempt.outcome == .succeeded ? .black : .gray)
+                                                    .foregroundColor(attempt.outcome == .succeeded ? .primary : .secondary)
                                             }
                                         }
                                     }
                                 }
                             }
                             .padding(20)
-                            .background(Color.white, in: RoundedRectangle(cornerRadius: 24))
-                            .shadow(color: Color.black.opacity(0.02), radius: 10, y: 5)
+                            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24))
+                            .shadow(color: Color.black.opacity(0.05), radius: 10, y: 5)
                         }
                     }
                     .padding(.horizontal, 24)
