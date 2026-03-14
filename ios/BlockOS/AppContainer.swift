@@ -9,17 +9,11 @@ import BlockOSPersistence
 
 @MainActor
 final class AppContainer: ObservableObject {
-    enum BlockingMode {
-        case prototype
-        case system
-    }
-
-    let blockingMode: BlockingMode
     let coordinator: SessionCoordinator
     let store: JSONFileAppStateStore
     private let shieldController: any ShieldControlling
     private let authorizer: any RestrictionAuthorizing
-    private let managedShieldController: ManagedSettingsShieldController?
+    private let managedShieldController: ManagedSettingsShieldController
 
     @Published private(set) var activeSession: FocusSession?
     @Published private(set) var sessionHistory: [FocusSession] = []
@@ -29,23 +23,13 @@ final class AppContainer: ObservableObject {
     @Published var errorMessage: String?
     @Published var activitySelection = FamilyActivitySelection()
 
-    let sampleBlockSet = BlockSet(
-        name: "Prototype Focus Set",
-        targets: [
-            BlockTarget(kind: .application, identifier: "prototype-social", displayName: "Social Apps"),
-            BlockTarget(kind: .category, identifier: "prototype-entertainment", displayName: "Entertainment")
-        ]
-    )
-
     init(
-        blockingMode: BlockingMode,
         coordinator: SessionCoordinator,
         store: JSONFileAppStateStore,
         shieldController: any ShieldControlling,
         authorizer: any RestrictionAuthorizing,
-        managedShieldController: ManagedSettingsShieldController?
+        managedShieldController: ManagedSettingsShieldController
     ) {
-        self.blockingMode = blockingMode
         self.coordinator = coordinator
         self.store = store
         self.shieldController = shieldController
@@ -58,36 +42,18 @@ final class AppContainer: ObservableObject {
             .appending(path: "BlockOS")
         let storeURL = baseURL.appending(path: "state.json")
         let store = JSONFileAppStateStore(fileURL: storeURL)
-        let useSystemBlocking = Bundle.main.boolValue(forInfoDictionaryKey: "BLOCKOS_USE_SYSTEM_BLOCKING")
-
-        if useSystemBlocking {
-            let selectionURL = baseURL.appending(path: "activity-selection.json")
-            let selectionStore = FamilyActivitySelectionStore(fileURL: selectionURL)
-            let shieldController = ManagedSettingsShieldController(selectionStore: selectionStore)
-            let authorizer = SystemRestrictionAuthorizer()
-            let coordinator = SessionCoordinator(store: store, shieldController: shieldController)
-
-            return AppContainer(
-                blockingMode: .system,
-                coordinator: coordinator,
-                store: store,
-                shieldController: shieldController,
-                authorizer: authorizer,
-                managedShieldController: shieldController
-            )
-        }
-
-        let shieldController = NoopShieldController()
-        let authorizer = NoopRestrictionAuthorizer(status: .approved)
+        let selectionURL = baseURL.appending(path: "activity-selection.json")
+        let selectionStore = FamilyActivitySelectionStore(fileURL: selectionURL)
+        let shieldController = ManagedSettingsShieldController(selectionStore: selectionStore)
+        let authorizer = SystemRestrictionAuthorizer()
         let coordinator = SessionCoordinator(store: store, shieldController: shieldController)
 
         return AppContainer(
-            blockingMode: .prototype,
             coordinator: coordinator,
             store: store,
             shieldController: shieldController,
             authorizer: authorizer,
-            managedShieldController: nil
+            managedShieldController: shieldController
         )
     }
 
@@ -96,15 +62,13 @@ final class AppContainer: ObservableObject {
         defer { isLoading = false }
 
         do {
-            authorizationStatus = supportsSystemBlocking ? await authorizer.authorizationStatus() : .approved
-            if let managedShieldController {
-                activitySelection = try await managedShieldController.loadSelection()
-            }
+            authorizationStatus = await authorizer.authorizationStatus()
+            activitySelection = try await managedShieldController.loadSelection()
             activeSession = try await coordinator.restoreActiveSession()
             sessionHistory = try await coordinator.loadHistory()
             qrTokens = try await coordinator.loadQRCodes()
 
-            if let activeSession, supportsSystemBlocking {
+            if let activeSession {
                 try await shieldController.applyRestrictions(for: activeSession.blockSet)
             }
 
@@ -115,12 +79,6 @@ final class AppContainer: ObservableObject {
     }
 
     func requestAuthorization() async {
-        guard supportsSystemBlocking else {
-            authorizationStatus = .approved
-            errorMessage = nil
-            return
-        }
-
         isLoading = true
         defer { isLoading = false }
 
@@ -133,10 +91,6 @@ final class AppContainer: ObservableObject {
     }
 
     func persistSelection(_ selection: FamilyActivitySelection) async {
-        guard let managedShieldController else {
-            return
-        }
-
         do {
             try await managedShieldController.saveSelection(selection)
             activitySelection = selection
@@ -147,28 +101,24 @@ final class AppContainer: ObservableObject {
     }
 
     func startSession() async {
-        if supportsSystemBlocking {
-            guard authorizationStatus == .approved else {
-                errorMessage = "Grant Family Controls authorization before starting a session."
-                return
-            }
+        guard authorizationStatus == .approved else {
+            errorMessage = "Grant Family Controls authorization before starting a session."
+            return
+        }
 
-            guard activitySelection.hasTargets else {
-                errorMessage = "Choose at least one app, category, or website to block."
-                return
-            }
+        guard activitySelection.hasTargets else {
+            errorMessage = "Choose at least one app, category, or website to block."
+            return
         }
 
         isLoading = true
         defer { isLoading = false }
 
         do {
-            if let managedShieldController {
-                try await managedShieldController.saveSelection(activitySelection)
-            }
+            try await managedShieldController.saveSelection(activitySelection)
 
             activeSession = try await coordinator.startSession(
-                blockSet: supportsSystemBlocking ? makeBlockSet(from: activitySelection) : sampleBlockSet,
+                blockSet: makeBlockSet(from: activitySelection),
                 unlockMethods: [.timer120, .qrCode]
             )
             errorMessage = nil
@@ -289,10 +239,6 @@ final class AppContainer: ObservableObject {
     }
 
     var selectionSummary: String {
-        guard supportsSystemBlocking else {
-            return "Prototype mode uses a local sample block set so the app can run on a Personal Team."
-        }
-
         let appCount = activitySelection.applicationTokens.count
         let categoryCount = activitySelection.categoryTokens.count
         let webDomainCount = activitySelection.webDomainTokens.count
@@ -311,20 +257,7 @@ final class AppContainer: ObservableObject {
     }
 
     func makePreviewTargets() -> [BlockTarget] {
-        supportsSystemBlocking ? makeBlockSet(from: activitySelection).targets : sampleBlockSet.targets
-    }
-
-    var supportsSystemBlocking: Bool {
-        blockingMode == .system
-    }
-
-    var blockingModeDescription: String {
-        switch blockingMode {
-        case .prototype:
-            "Prototype mode is active. This build installs on a Personal Team, but it cannot shield other apps."
-        case .system:
-            "System blocking is active. Selected apps should open into the iOS shield while a session is running."
-        }
+        makeBlockSet(from: activitySelection).targets
     }
 
     private func makeBlockSet(from selection: FamilyActivitySelection) -> BlockSet {
@@ -375,18 +308,5 @@ final class AppContainer: ObservableObject {
 private extension FamilyActivitySelection {
     var hasTargets: Bool {
         !applicationTokens.isEmpty || !categoryTokens.isEmpty || !webDomainTokens.isEmpty
-    }
-}
-
-private extension Bundle {
-    func boolValue(forInfoDictionaryKey key: String) -> Bool {
-        switch object(forInfoDictionaryKey: key) {
-        case let value as Bool:
-            value
-        case let value as String:
-            NSString(string: value).boolValue
-        default:
-            false
-        }
     }
 }
