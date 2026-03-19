@@ -86,7 +86,8 @@ final class AppContainer: ObservableObject {
             authorizationStatus = try await authorizer.requestAuthorization()
             errorMessage = nil
         } catch {
-            errorMessage = error.localizedDescription
+            authorizationStatus = await authorizer.authorizationStatus()
+            errorMessage = authorizationRequestMessage(for: authorizationStatus)
         }
     }
 
@@ -302,6 +303,21 @@ final class AppContainer: ObservableObject {
         }
 
         return count == 1 ? "1 \(singular)" : "\(count) \(singular)s"
+    }
+
+    func clearErrorMessage() {
+        errorMessage = nil
+    }
+
+    private func authorizationRequestMessage(for status: RestrictionAuthorizationStatus) -> String {
+        switch status {
+        case .approved:
+            return "Screen Time access could not be confirmed. Please try again."
+        case .denied:
+            return "Screen Time access was not granted. To block apps, allow access and try again."
+        case .notDetermined:
+            return "Screen Time access was not granted. You can try again when you're ready."
+        }
     }
 }
 

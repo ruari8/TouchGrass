@@ -6,6 +6,7 @@ import BlockOSEnforcement
 struct RootView: View {
     @EnvironmentObject private var container: AppContainer
     @State private var selectedTab: Tab = .session
+    @State private var errorBannerTask: Task<Void, Never>?
 
     enum Tab { case session, unlockMethods, history }
 
@@ -35,6 +36,19 @@ struct RootView: View {
         }
         .task {
             await container.refresh()
+        }
+        .onChange(of: container.errorMessage) { _, message in
+            errorBannerTask?.cancel()
+
+            guard message != nil else { return }
+
+            errorBannerTask = Task {
+                try? await Task.sleep(for: .seconds(4))
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    container.clearErrorMessage()
+                }
+            }
         }
     }
 }
@@ -85,14 +99,28 @@ private struct SessionView: View {
             .padding(.bottom, 16)
             
             if let errorMessage = container.errorMessage {
-                Text(errorMessage)
-                    .font(.system(size: 14, weight: .medium, design: .rounded))
-                    .foregroundColor(.white)
-                    .padding(16)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-                    .background(Color.red, in: RoundedRectangle(cornerRadius: 12))
-                    .padding(.horizontal, 24)
-                    .padding(.bottom, 16)
+                HStack(spacing: 12) {
+                    Text(errorMessage)
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundColor(.white)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+
+                    Button {
+                        container.clearErrorMessage()
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundColor(.white.opacity(0.9))
+                            .frame(width: 24, height: 24)
+                            .background(Color.white.opacity(0.16), in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(16)
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .background(Color.red, in: RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal, 24)
+                .padding(.bottom, 16)
             }
 
             ScrollView(showsIndicators: false) {
@@ -249,9 +277,13 @@ private struct SetupSessionView: View {
                         
                         ActionCard(
                             icon: "shield.righthalf.filled",
-                            title: "Allow Screen Time Access",
+                            title: container.isLoading ? "Requesting Access..." : "Allow Screen Time Access",
                             subtitle: "Required to block apps on this device.",
-                            action: { Task { await container.requestAuthorization() } }
+                            action: {
+                                guard !container.isLoading else { return }
+                                Task { await container.requestAuthorization() }
+                            },
+                            showsProgress: container.isLoading
                         )
                     }
                 }
@@ -376,6 +408,7 @@ private struct ActionCard: View {
     let title: String
     let subtitle: String
     let action: () -> Void
+    var showsProgress: Bool = false
     
     var body: some View {
         Button(action: action) {
@@ -399,9 +432,14 @@ private struct ActionCard: View {
                         .multilineTextAlignment(.leading)
                 }
                 Spacer()
-                Image(systemName: "chevron.right")
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundColor(.secondary.opacity(0.3))
+                if showsProgress {
+                    ProgressView()
+                        .tint(.secondary)
+                } else {
+                    Image(systemName: "chevron.right")
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.secondary.opacity(0.3))
+                }
             }
             .padding(16)
             .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 20))
