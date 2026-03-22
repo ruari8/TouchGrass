@@ -11,28 +11,39 @@ struct RootView: View {
     enum Tab { case session, unlockMethods, history }
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Main Content Area
-            ZStack {
-                Color(UIColor.systemGroupedBackground).ignoresSafeArea()
-                
-                switch selectedTab {
-                case .session: SessionView()
-                case .unlockMethods: QRCodesView()
-                case .history: HistoryView()
+        Group {
+            if !container.hasLoadedInitialState {
+                ZStack {
+                    Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+                    ProgressView()
+                }
+            } else if !container.hasCompletedOnboarding {
+                OnboardingFlowView()
+            } else {
+                VStack(spacing: 0) {
+                    // Main Content Area
+                    ZStack {
+                        Color(UIColor.systemGroupedBackground).ignoresSafeArea()
+                        
+                        switch selectedTab {
+                        case .session: SessionView()
+                        case .unlockMethods: QRCodesView()
+                        case .history: HistoryView()
+                        }
+                    }
+
+                    // Refined Tab Bar
+                    HStack(spacing: 0) {
+                        TabButton(icon: "lock.shield", title: "Focus", tab: .session, selectedTab: $selectedTab)
+                        TabButton(icon: "key", title: "Unlocks", tab: .unlockMethods, selectedTab: $selectedTab)
+                        TabButton(icon: "clock", title: "History", tab: .history, selectedTab: $selectedTab)
+                    }
+                    .padding(.top, 12)
+                    .padding(.bottom, 8)
+                    .background(Color(UIColor.secondarySystemGroupedBackground))
+                    .shadow(color: Color.black.opacity(0.05), radius: 10, y: -5)
                 }
             }
-
-            // Refined Tab Bar
-            HStack(spacing: 0) {
-                TabButton(icon: "lock.shield", title: "Focus", tab: .session, selectedTab: $selectedTab)
-                TabButton(icon: "key", title: "Unlocks", tab: .unlockMethods, selectedTab: $selectedTab)
-                TabButton(icon: "clock", title: "History", tab: .history, selectedTab: $selectedTab)
-            }
-            .padding(.top, 12)
-            .padding(.bottom, 8)
-            .background(Color(UIColor.secondarySystemGroupedBackground))
-            .shadow(color: Color.black.opacity(0.05), radius: 10, y: -5)
         }
         .task {
             await container.refresh()
@@ -136,14 +147,16 @@ private struct SessionView: View {
             }
         }
         .familyActivityPicker(isPresented: $isActivityPickerPresented, selection: $container.activitySelection)
-        .onChange(of: container.activitySelection) { _, selection in
-            Task { await container.persistSelection(selection) }
+        .onChange(of: container.activitySelection) { previousSelection, selection in
+            Task { await container.persistSelection(selection, previousSelection: previousSelection) }
         }
     }
 }
 
 private struct ActiveSessionView: View {
     @EnvironmentObject private var container: AppContainer
+    @State private var isActivityPickerPresented = false
+    @State private var isEmergencyOverrideConfirmationPresented = false
     let session: FocusSession
     
     var body: some View {
@@ -163,13 +176,26 @@ private struct ActiveSessionView: View {
                     Text("Focus is Active")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.primary)
-                    Text("Selected apps are currently hidden.")
+                    Text("Selected apps are currently blocked.")
                         .font(.system(size: 15, weight: .regular, design: .rounded))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
                 }
             }
             .padding(.top, 32)
+
+            VStack(alignment: .leading, spacing: 16) {
+                Text("Configuration")
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    .foregroundColor(.primary)
+
+                ActionCard(
+                    icon: "slider.horizontal.3",
+                    title: "Add More Blocks",
+                    subtitle: "\(container.selectionSummary) • You can only add more during focus",
+                    action: { isActivityPickerPresented = true }
+                )
+            }
 
             if session.state == .unlockChallengeInProgress,
                session.activeUnlockMethod == .timer120,
@@ -231,6 +257,27 @@ private struct ActiveSessionView: View {
                     }
                 }
             }
+
+            if session.overridePolicy.allowsEmergencyOverride {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Need immediate access?")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        .foregroundColor(.primary)
+
+                    DangerButton(title: "Emergency Unblock") {
+                        isEmergencyOverrideConfirmationPresented = true
+                    }
+                }
+            }
+        }
+        .familyActivityPicker(isPresented: $isActivityPickerPresented, selection: $container.activitySelection)
+        .alert("Emergency unblock?", isPresented: $isEmergencyOverrideConfirmationPresented) {
+            Button("Cancel", role: .cancel) {}
+            Button("End Focus Now", role: .destructive) {
+                Task { await container.emergencyOverride() }
+            }
+        } message: {
+            Text("This immediately removes all active restrictions and ends the current focus session.")
         }
     }
 }
@@ -294,6 +341,25 @@ private struct SetupSessionView: View {
                             .font(.system(size: 12, weight: .bold, design: .rounded))
                             .foregroundColor(.secondary)
                             .textCase(.uppercase)
+
+                        if let goalPlanSummary = container.goalPlanSummary {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Daily Goal")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                    .foregroundColor(.secondary)
+                                    .textCase(.uppercase)
+                                Text(goalPlanSummary)
+                                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.primary)
+                                if let focus = container.onboardingProfile?.goalPlan?.reductionFocus {
+                                    Text("Primary reduction target: \(focus)")
+                                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                            .padding(16)
+                            .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 20))
+                        }
                         
                         Button(action: { isPickerPresented = true }) {
                             HStack(spacing: 16) {
@@ -475,6 +541,28 @@ private struct ElegantButton: View {
                 .clipShape(RoundedRectangle(cornerRadius: 16))
         }
         .disabled(isDisabled)
+    }
+}
+
+private struct DangerButton: View {
+    let title: String
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 12) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .font(.system(size: 16, weight: .semibold))
+                Text(title)
+                    .font(.system(size: 16, weight: .semibold, design: .rounded))
+                Spacer()
+            }
+            .foregroundColor(.white)
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .padding(.horizontal, 18)
+            .padding(.vertical, 18)
+            .background(Color.red, in: RoundedRectangle(cornerRadius: 16))
+        }
     }
 }
 

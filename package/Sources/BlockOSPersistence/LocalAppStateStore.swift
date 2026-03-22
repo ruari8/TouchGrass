@@ -5,15 +5,18 @@ public struct PersistedAppState: Codable, Sendable {
     public var activeSession: FocusSession?
     public var sessionHistory: [FocusSession]
     public var qrTokens: [QRCodeToken]
+    public var onboardingProfile: OnboardingProfile?
 
     public init(
         activeSession: FocusSession? = nil,
         sessionHistory: [FocusSession] = [],
-        qrTokens: [QRCodeToken] = []
+        qrTokens: [QRCodeToken] = [],
+        onboardingProfile: OnboardingProfile? = nil
     ) {
         self.activeSession = activeSession
         self.sessionHistory = sessionHistory
         self.qrTokens = qrTokens
+        self.onboardingProfile = onboardingProfile
     }
 }
 

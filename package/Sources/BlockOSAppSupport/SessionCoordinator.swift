@@ -130,6 +130,20 @@ public actor SessionCoordinator {
         return state.activeSession
     }
 
+    @discardableResult
+    public func updateActiveBlockSet(_ blockSet: BlockSet) async throws -> FocusSession {
+        var state = try await store.load()
+        guard var session = state.activeSession else {
+            throw CoordinatorError.noActiveSession
+        }
+
+        session.blockSet = blockSet
+        state.activeSession = session
+        try await store.save(state)
+        try await shieldController.applyRestrictions(for: blockSet)
+        return session
+    }
+
     public func generateQRCode(label: String, now: Date = .now) async throws -> QRCodeToken {
         var state = try await store.load()
         let payload = "blockos://unlock/\(UUID().uuidString.lowercased())"

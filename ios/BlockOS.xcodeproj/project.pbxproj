@@ -11,16 +11,77 @@
 		A68449772F6423F900C85C75 /* BlockOSDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A68449762F6423F900C85C75 /* BlockOSDomain */; };
 		A68449792F6423F900C85C75 /* BlockOSEnforcement in Frameworks */ = {isa = PBXBuildFile; productRef = A68449782F6423F900C85C75 /* BlockOSEnforcement */; };
 		A684497B2F6423F900C85C75 /* BlockOSPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = A684497A2F6423F900C85C75 /* BlockOSPersistence */; };
+		B10000012F65000100AAA001 /* BlockOSShieldConfiguration.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B10000022F65000100AAA001 /* BlockOSShieldAction.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B10000122F65000100AAA001 /* BlockOSShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B20000012F65000100AAA001 /* BlockOSUsageReport.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B20000112F65000100AAA001 /* BlockOSUsageReport.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		B10000512F65000100AAA001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A68449552F6418D500C85C75 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B10000B12F65000100AAA001;
+			remoteInfo = BlockOSShieldConfiguration;
+		};
+		B10000522F65000100AAA001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A68449552F6418D500C85C75 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B10000B22F65000100AAA001;
+			remoteInfo = BlockOSShieldAction;
+		};
+		B20000512F65000100AAA001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A68449552F6418D500C85C75 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = B20000B12F65000100AAA001;
+			remoteInfo = BlockOSUsageReport;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		B10000312F65000100AAA001 /* Embed App Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 13;
+			files = (
+				B10000012F65000100AAA001 /* BlockOSShieldConfiguration.appex in Embed App Extensions */,
+				B10000022F65000100AAA001 /* BlockOSShieldAction.appex in Embed App Extensions */,
+				B20000012F65000100AAA001 /* BlockOSUsageReport.appex in Embed App Extensions */,
+			);
+			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
 		A684495D2F6418D500C85C75 /* BlockOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlockOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSShieldConfiguration.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000122F65000100AAA001 /* BlockOSShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B20000112F65000100AAA001 /* BlockOSUsageReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSUsageReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		A684495F2F6418D500C85C75 /* BlockOS */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = BlockOS;
+			sourceTree = "<group>";
+		};
+		B10000212F65000100AAA001 /* BlockOSShieldConfiguration */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BlockOSShieldConfiguration;
+			sourceTree = "<group>";
+		};
+		B10000222F65000100AAA001 /* BlockOSShieldAction */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BlockOSShieldAction;
+			sourceTree = "<group>";
+		};
+		B20000212F65000100AAA001 /* BlockOSUsageReport */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BlockOSUsageReport;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -37,6 +98,27 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B10000412F65000100AAA001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000422F65000100AAA001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B20000412F65000100AAA001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -44,6 +126,9 @@
 			isa = PBXGroup;
 			children = (
 				A684495F2F6418D500C85C75 /* BlockOS */,
+				B10000212F65000100AAA001 /* BlockOSShieldConfiguration */,
+				B10000222F65000100AAA001 /* BlockOSShieldAction */,
+				B20000212F65000100AAA001 /* BlockOSUsageReport */,
 				A684495E2F6418D500C85C75 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -52,6 +137,9 @@
 			isa = PBXGroup;
 			children = (
 				A684495D2F6418D500C85C75 /* BlockOS.app */,
+				B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */,
+				B10000122F65000100AAA001 /* BlockOSShieldAction.appex */,
+				B20000112F65000100AAA001 /* BlockOSUsageReport.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -65,11 +153,15 @@
 			buildPhases = (
 				A68449592F6418D500C85C75 /* Sources */,
 				A684495A2F6418D500C85C75 /* Frameworks */,
+				B10000312F65000100AAA001 /* Embed App Extensions */,
 				A684495B2F6418D500C85C75 /* Resources */,
 			);
 			buildRules = (
 			);
 			dependencies = (
+				B10000612F65000100AAA001 /* PBXTargetDependency */,
+				B10000622F65000100AAA001 /* PBXTargetDependency */,
+				B20000612F65000100AAA001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A684495F2F6418D500C85C75 /* BlockOS */,
@@ -85,6 +177,72 @@
 			productReference = A684495D2F6418D500C85C75 /* BlockOS.app */;
 			productType = "com.apple.product-type.application";
 		};
+		B10000B12F65000100AAA001 /* BlockOSShieldConfiguration */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B10000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSShieldConfiguration" */;
+			buildPhases = (
+				B10000812F65000100AAA001 /* Sources */,
+				B10000412F65000100AAA001 /* Frameworks */,
+				B10000712F65000100AAA001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B10000212F65000100AAA001 /* BlockOSShieldConfiguration */,
+			);
+			name = BlockOSShieldConfiguration;
+			packageProductDependencies = (
+			);
+			productName = BlockOSShieldConfiguration;
+			productReference = B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		B10000B22F65000100AAA001 /* BlockOSShieldAction */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B10000A22F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSShieldAction" */;
+			buildPhases = (
+				B10000822F65000100AAA001 /* Sources */,
+				B10000422F65000100AAA001 /* Frameworks */,
+				B10000722F65000100AAA001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B10000222F65000100AAA001 /* BlockOSShieldAction */,
+			);
+			name = BlockOSShieldAction;
+			packageProductDependencies = (
+			);
+			productName = BlockOSShieldAction;
+			productReference = B10000122F65000100AAA001 /* BlockOSShieldAction.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		B20000B12F65000100AAA001 /* BlockOSUsageReport */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = B20000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSUsageReport" */;
+			buildPhases = (
+				B20000812F65000100AAA001 /* Sources */,
+				B20000412F65000100AAA001 /* Frameworks */,
+				B20000712F65000100AAA001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				B20000212F65000100AAA001 /* BlockOSUsageReport */,
+			);
+			name = BlockOSUsageReport;
+			packageProductDependencies = (
+			);
+			productName = BlockOSUsageReport;
+			productReference = B20000112F65000100AAA001 /* BlockOSUsageReport.appex */;
+			productType = "com.apple.product-type.extensionkit-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -96,6 +254,15 @@
 				LastUpgradeCheck = 2600;
 				TargetAttributes = {
 					A684495C2F6418D500C85C75 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					B10000B12F65000100AAA001 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					B10000B22F65000100AAA001 = {
+						CreatedOnToolsVersion = 26.0.1;
+					};
+					B20000B12F65000100AAA001 = {
 						CreatedOnToolsVersion = 26.0.1;
 					};
 				};
@@ -118,12 +285,36 @@
 			projectRoot = "";
 			targets = (
 				A684495C2F6418D500C85C75 /* BlockOS */,
+				B10000B12F65000100AAA001 /* BlockOSShieldConfiguration */,
+				B10000B22F65000100AAA001 /* BlockOSShieldAction */,
+				B20000B12F65000100AAA001 /* BlockOSUsageReport */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		A684495B2F6418D500C85C75 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000712F65000100AAA001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000722F65000100AAA001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B20000712F65000100AAA001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -140,7 +331,46 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B10000812F65000100AAA001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B10000822F65000100AAA001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B20000812F65000100AAA001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		B10000612F65000100AAA001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B10000B12F65000100AAA001 /* BlockOSShieldConfiguration */;
+			targetProxy = B10000512F65000100AAA001 /* PBXContainerItemProxy */;
+		};
+		B10000622F65000100AAA001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B10000B22F65000100AAA001 /* BlockOSShieldAction */;
+			targetProxy = B10000522F65000100AAA001 /* PBXContainerItemProxy */;
+		};
+		B20000612F65000100AAA001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = B20000B12F65000100AAA001 /* BlockOSUsageReport */;
+			targetProxy = B20000512F65000100AAA001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		A68449662F6418D600C85C75 /* Debug */ = {
@@ -328,6 +558,160 @@
 			};
 			name = Release;
 		};
+		B10000912F65000100AAA001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = BlockOSShieldConfiguration/BlockOSShieldConfiguration.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YM9WKCY3CH;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.ManagedSettingsUI.shield-configuration-service";
+				INFOPLIST_KEY_NSExtension_NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).ShieldConfigurationExtension";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.ShieldConfiguration;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B10000922F65000100AAA001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = BlockOSShieldConfiguration/BlockOSShieldConfiguration.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YM9WKCY3CH;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.ManagedSettingsUI.shield-configuration-service";
+				INFOPLIST_KEY_NSExtension_NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).ShieldConfigurationExtension";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.ShieldConfiguration;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B10000932F65000100AAA001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = BlockOSShieldAction/BlockOSShieldAction.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YM9WKCY3CH;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.ManagedSettings.shield-action-service";
+				INFOPLIST_KEY_NSExtension_NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).ShieldActionExtension";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.ShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B10000942F65000100AAA001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = BlockOSShieldAction/BlockOSShieldAction.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YM9WKCY3CH;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.ManagedSettings.shield-action-service";
+				INFOPLIST_KEY_NSExtension_NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).ShieldActionExtension";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.ShieldAction;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		B20000912F65000100AAA001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = BlockOSUsageReport/BlockOSUsageReport.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YM9WKCY3CH;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_EXAppExtensionAttributes_EXExtensionPointIdentifier = "com.apple.deviceactivityui.report-extension";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.UsageReport;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		B20000922F65000100AAA001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = BlockOSUsageReport/BlockOSUsageReport.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YM9WKCY3CH;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_EXAppExtensionAttributes_EXExtensionPointIdentifier = "com.apple.deviceactivityui.report-extension";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.UsageReport;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -345,6 +729,33 @@
 			buildConfigurations = (
 				A68449692F6418D600C85C75 /* Debug */,
 				A684496A2F6418D600C85C75 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B10000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSShieldConfiguration" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B10000912F65000100AAA001 /* Debug */,
+				B10000922F65000100AAA001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B10000A22F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSShieldAction" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B10000932F65000100AAA001 /* Debug */,
+				B10000942F65000100AAA001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		B20000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSUsageReport" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				B20000912F65000100AAA001 /* Debug */,
+				B20000922F65000100AAA001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

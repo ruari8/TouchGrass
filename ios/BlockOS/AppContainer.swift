@@ -18,7 +18,9 @@ final class AppContainer: ObservableObject {
     @Published private(set) var activeSession: FocusSession?
     @Published private(set) var sessionHistory: [FocusSession] = []
     @Published private(set) var qrTokens: [QRCodeToken] = []
+    @Published private(set) var onboardingProfile: OnboardingProfile?
     @Published private(set) var isLoading = false
+    @Published private(set) var hasLoadedInitialState = false
     @Published private(set) var authorizationStatus: RestrictionAuthorizationStatus = .notDetermined
     @Published var errorMessage: String?
     @Published var activitySelection = FamilyActivitySelection()
@@ -64,9 +66,11 @@ final class AppContainer: ObservableObject {
         do {
             authorizationStatus = await authorizer.authorizationStatus()
             activitySelection = try await managedShieldController.loadSelection()
-            activeSession = try await coordinator.restoreActiveSession()
-            sessionHistory = try await coordinator.loadHistory()
-            qrTokens = try await coordinator.loadQRCodes()
+            let state = try await store.load()
+            activeSession = state.activeSession
+            sessionHistory = state.sessionHistory
+            qrTokens = state.qrTokens
+            onboardingProfile = state.onboardingProfile
 
             if let activeSession {
                 try await shieldController.applyRestrictions(for: activeSession.blockSet)
@@ -75,6 +79,10 @@ final class AppContainer: ObservableObject {
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
+        }
+
+        if !hasLoadedInitialState {
+            hasLoadedInitialState = true
         }
     }
 
@@ -91,12 +99,39 @@ final class AppContainer: ObservableObject {
         }
     }
 
-    func persistSelection(_ selection: FamilyActivitySelection) async {
+    func persistSelection(
+        _ selection: FamilyActivitySelection,
+        previousSelection: FamilyActivitySelection? = nil
+    ) async {
+        if activeSession != nil {
+            let baselineSelection = previousSelection ?? activitySelection
+
+            guard selection.hasTargets else {
+                activitySelection = baselineSelection
+                errorMessage = "Keep at least one blocked target while a focus session is active."
+                return
+            }
+
+            guard selection.containsAllTargets(from: baselineSelection) else {
+                activitySelection = baselineSelection
+                errorMessage = "While focus is active, you can only add more blocked apps or websites. Use Emergency Unblock to remove one."
+                return
+            }
+        }
+
         do {
             try await managedShieldController.saveSelection(selection)
             activitySelection = selection
+
+            if activeSession != nil {
+                activeSession = try await coordinator.updateActiveBlockSet(makeBlockSet(from: selection))
+            }
+
             errorMessage = nil
         } catch {
+            if let previousSelection {
+                activitySelection = previousSelection
+            }
             errorMessage = error.localizedDescription
         }
     }
@@ -239,6 +274,33 @@ final class AppContainer: ObservableObject {
         }
     }
 
+    func completeOnboarding(_ profile: OnboardingProfile) async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            var state = try await store.load()
+            state.onboardingProfile = profile
+            try await store.save(state)
+            onboardingProfile = profile
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    var hasCompletedOnboarding: Bool {
+        onboardingProfile != nil
+    }
+
+    var goalPlanSummary: String? {
+        guard let goalPlan = onboardingProfile?.goalPlan else {
+            return nil
+        }
+
+        return "\(formattedMinutes(goalPlan.idealDailyMinutes)) daily • \(formattedMinutes(goalPlan.socialMediaMinutes)) social • \(formattedMinutes(goalPlan.everythingElseMinutes)) everything else"
+    }
+
     var selectionSummary: String {
         let appCount = activitySelection.applicationTokens.count
         let categoryCount = activitySelection.categoryTokens.count
@@ -305,6 +367,18 @@ final class AppContainer: ObservableObject {
         return count == 1 ? "1 \(singular)" : "\(count) \(singular)s"
     }
 
+    private func formattedMinutes(_ minutes: Int) -> String {
+        if minutes % 60 == 0 {
+            return "\(minutes / 60)h"
+        }
+
+        if minutes > 60 {
+            return "\(minutes / 60)h \(minutes % 60)m"
+        }
+
+        return "\(minutes)m"
+    }
+
     func clearErrorMessage() {
         errorMessage = nil
     }
@@ -324,5 +398,11 @@ final class AppContainer: ObservableObject {
 private extension FamilyActivitySelection {
     var hasTargets: Bool {
         !applicationTokens.isEmpty || !categoryTokens.isEmpty || !webDomainTokens.isEmpty
+    }
+
+    func containsAllTargets(from other: FamilyActivitySelection) -> Bool {
+        applicationTokens.isSuperset(of: other.applicationTokens)
+            && categoryTokens.isSuperset(of: other.categoryTokens)
+            && webDomainTokens.isSuperset(of: other.webDomainTokens)
     }
 }

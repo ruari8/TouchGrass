@@ -122,7 +122,7 @@ public struct QRCodeToken: Codable, Hashable, Sendable, Identifiable {
 
 public struct FocusSession: Codable, Hashable, Sendable, Identifiable {
     public let id: UUID
-    public let blockSet: BlockSet
+    public var blockSet: BlockSet
     public let startedAt: Date
     public var state: FocusSessionState
     public var allowedUnlockMethods: [UnlockMethod]

@@ -21,6 +21,10 @@ let package = Package(
             name: "BlockOSAppSupport",
             dependencies: ["BlockOSDomain", "BlockOSPersistence", "BlockOSEnforcement"]
         ),
-        .testTarget(name: "BlockOSDomainTests", dependencies: ["BlockOSDomain"])
+        .testTarget(name: "BlockOSDomainTests", dependencies: ["BlockOSDomain"]),
+        .testTarget(
+            name: "BlockOSAppSupportTests",
+            dependencies: ["BlockOSAppSupport", "BlockOSDomain", "BlockOSEnforcement", "BlockOSPersistence"]
+        )
     ]
 )

@@ -56,3 +56,5 @@ This document keeps future challenge and anti-circumvention ideas from getting l
 - Keep the product framed as intentional friction, not impossible lockout.
 - Physical separation is stronger than on-device friction, so the software moat should come from good challenge design and clean UX.
 - Promote new challenge types only after session restoration and shielding are stable.
+- Supervised / MDM device management was considered and explicitly rejected for the app version. It would unlock features like device-wide restrictions, hidden apps, enforced home-screen policy, and Single App Mode, but that is a different managed-device product, not a normal downloadable BlockOS app.
+- The app version stays inside Family Controls / Screen Time constraints, so product differentiation has to come from challenge design, coaching, reporting, and shield UX rather than deeper operating-system control.
