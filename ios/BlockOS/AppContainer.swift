@@ -14,11 +14,14 @@ final class AppContainer: ObservableObject {
     private let shieldController: any ShieldControlling
     private let authorizer: any RestrictionAuthorizing
     private let managedShieldController: ManagedSettingsShieldController
+    private let dailyLimitMonitor: ScreenTimeDailyLimitMonitor
 
     @Published private(set) var activeSession: FocusSession?
     @Published private(set) var sessionHistory: [FocusSession] = []
     @Published private(set) var qrTokens: [QRCodeToken] = []
     @Published private(set) var onboardingProfile: OnboardingProfile?
+    @Published private(set) var dailyLimitSummary: String?
+    @Published private(set) var dailyLimitLockState: DailyLimitLockState = .idle
     @Published private(set) var isLoading = false
     @Published private(set) var hasLoadedInitialState = false
     @Published private(set) var authorizationStatus: RestrictionAuthorizationStatus = .notDetermined
@@ -30,18 +33,20 @@ final class AppContainer: ObservableObject {
         store: JSONFileAppStateStore,
         shieldController: any ShieldControlling,
         authorizer: any RestrictionAuthorizing,
-        managedShieldController: ManagedSettingsShieldController
+        managedShieldController: ManagedSettingsShieldController,
+        dailyLimitMonitor: ScreenTimeDailyLimitMonitor
     ) {
         self.coordinator = coordinator
         self.store = store
         self.shieldController = shieldController
         self.authorizer = authorizer
         self.managedShieldController = managedShieldController
+        self.dailyLimitMonitor = dailyLimitMonitor
     }
 
     static func bootstrap() -> AppContainer {
-        let baseURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appending(path: "BlockOS")
+        let baseURL = BlockOSSharedContainer.baseURL()
+        migrateLegacyStorageIfNeeded(to: baseURL)
         let storeURL = baseURL.appending(path: "state.json")
         let store = JSONFileAppStateStore(fileURL: storeURL)
         let selectionURL = baseURL.appending(path: "activity-selection.json")
@@ -49,14 +54,44 @@ final class AppContainer: ObservableObject {
         let shieldController = ManagedSettingsShieldController(selectionStore: selectionStore)
         let authorizer = SystemRestrictionAuthorizer()
         let coordinator = SessionCoordinator(store: store, shieldController: shieldController)
+        let dailyLimitMonitor = ScreenTimeDailyLimitMonitor()
 
         return AppContainer(
             coordinator: coordinator,
             store: store,
             shieldController: shieldController,
             authorizer: authorizer,
-            managedShieldController: shieldController
+            managedShieldController: shieldController,
+            dailyLimitMonitor: dailyLimitMonitor
         )
+    }
+
+    private static func migrateLegacyStorageIfNeeded(to baseURL: URL) {
+        let legacyBaseURL = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
+            .appending(path: "BlockOS")
+
+        guard legacyBaseURL != baseURL else {
+            return
+        }
+
+        for fileName in ["state.json", "activity-selection.json"] {
+            let legacyURL = legacyBaseURL.appending(path: fileName)
+            let destinationURL = baseURL.appending(path: fileName)
+
+            guard
+                FileManager.default.fileExists(atPath: legacyURL.path),
+                !FileManager.default.fileExists(atPath: destinationURL.path)
+            else {
+                continue
+            }
+
+            do {
+                try FileManager.default.createDirectory(at: baseURL, withIntermediateDirectories: true)
+                try FileManager.default.copyItem(at: legacyURL, to: destinationURL)
+            } catch {
+                // A failed migration should not prevent the app from starting with a fresh store.
+            }
+        }
     }
 
     func refresh() async {
@@ -71,11 +106,18 @@ final class AppContainer: ObservableObject {
             sessionHistory = state.sessionHistory
             qrTokens = state.qrTokens
             onboardingProfile = state.onboardingProfile
+            dailyLimitLockState = DailyLimitLockStore.load()
 
             if let activeSession {
                 try await shieldController.applyRestrictions(for: activeSession.blockSet)
+            } else if dailyLimitLockState.isLocked, activitySelection.hasTargets {
+                activeSession = try await coordinator.startSession(
+                    blockSet: makeBlockSet(from: activitySelection),
+                    unlockMethods: [.touchGrassPhoto, .timer120]
+                )
             }
 
+            try syncDailyLimitMonitoring()
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
@@ -92,6 +134,12 @@ final class AppContainer: ObservableObject {
 
         do {
             authorizationStatus = try await authorizer.requestAuthorization()
+            do {
+                try syncDailyLimitMonitoring()
+            } catch {
+                errorMessage = "Screen Time access is enabled, but daily limit monitoring could not start: \(error.localizedDescription)"
+                return
+            }
             errorMessage = nil
         } catch {
             authorizationStatus = await authorizer.authorizationStatus()
@@ -127,6 +175,7 @@ final class AppContainer: ObservableObject {
                 activeSession = try await coordinator.updateActiveBlockSet(makeBlockSet(from: selection))
             }
 
+            try syncDailyLimitMonitoring()
             errorMessage = nil
         } catch {
             if let previousSelection {
@@ -155,7 +204,7 @@ final class AppContainer: ObservableObject {
 
             activeSession = try await coordinator.startSession(
                 blockSet: makeBlockSet(from: activitySelection),
-                unlockMethods: [.timer120, .qrCode]
+                unlockMethods: [.touchGrassPhoto, .timer120]
             )
             errorMessage = nil
         } catch {
@@ -194,6 +243,22 @@ final class AppContainer: ObservableObject {
         do {
             _ = try await coordinator.markUnlockReady(method: .timer120)
             _ = try await coordinator.confirmUnlock()
+            try markDailyLimitUnlockedIfNeeded(detail: "Timer unlock completed.")
+            await refresh()
+            errorMessage = nil
+        } catch {
+            errorMessage = error.localizedDescription
+        }
+    }
+
+    func completeTouchGrassUnlock() async {
+        isLoading = true
+        defer { isLoading = false }
+
+        do {
+            _ = try await coordinator.markUnlockReady(method: .touchGrassPhoto)
+            _ = try await coordinator.confirmUnlock()
+            try markDailyLimitUnlockedIfNeeded(detail: "Touch Grass challenge completed.")
             await refresh()
             errorMessage = nil
         } catch {
@@ -207,6 +272,7 @@ final class AppContainer: ObservableObject {
 
         do {
             _ = try await coordinator.confirmUnlock()
+            try markDailyLimitUnlockedIfNeeded(detail: "Unlock challenge completed.")
             await refresh()
             errorMessage = nil
         } catch {
@@ -232,6 +298,7 @@ final class AppContainer: ObservableObject {
 
         do {
             _ = try await coordinator.emergencyOverride()
+            try markDailyLimitUnlockedIfNeeded(detail: "Emergency override completed.")
             await refresh()
             errorMessage = nil
         } catch {
@@ -283,6 +350,7 @@ final class AppContainer: ObservableObject {
             state.onboardingProfile = profile
             try await store.save(state)
             onboardingProfile = profile
+            try syncDailyLimitMonitoring()
             errorMessage = nil
         } catch {
             errorMessage = error.localizedDescription
@@ -296,6 +364,20 @@ final class AppContainer: ObservableObject {
     var goalPlanSummary: String? {
         guard let goalPlan = onboardingProfile?.goalPlan else {
             return nil
+        }
+
+        if !goalPlan.categoryBudgets.isEmpty {
+            let categorySummary = goalPlan.categoryBudgets
+                .filter { $0.minutes > 0 }
+                .prefix(4)
+                .map { "\($0.displayName) \(formattedMinutes($0.minutes))" }
+                .joined(separator: " • ")
+
+            if categorySummary.isEmpty {
+                return "\(formattedMinutes(goalPlan.idealDailyMinutes)) daily"
+            }
+
+            return "\(formattedMinutes(goalPlan.idealDailyMinutes)) daily • \(categorySummary)"
         }
 
         return "\(formattedMinutes(goalPlan.idealDailyMinutes)) daily • \(formattedMinutes(goalPlan.socialMediaMinutes)) social • \(formattedMinutes(goalPlan.everythingElseMinutes)) everything else"
@@ -381,6 +463,29 @@ final class AppContainer: ObservableObject {
 
     func clearErrorMessage() {
         errorMessage = nil
+    }
+
+    private func syncDailyLimitMonitoring() throws {
+        guard hasCompletedOnboarding, authorizationStatus == .approved else {
+            dailyLimitSummary = nil
+            return
+        }
+
+        dailyLimitLockState = DailyLimitLockStore.load()
+        dailyLimitSummary = try dailyLimitMonitor.sync(
+            selection: activitySelection,
+            profile: onboardingProfile,
+            lockState: dailyLimitLockState
+        )
+    }
+
+    private func markDailyLimitUnlockedIfNeeded(detail: String) throws {
+        guard DailyLimitLockStore.load().isLocked else {
+            return
+        }
+
+        dailyLimitMonitor.clearLimitShield()
+        try DailyLimitLockStore.save(.unlocked(detail: detail))
     }
 
     private func authorizationRequestMessage(for status: RestrictionAuthorizationStatus) -> String {

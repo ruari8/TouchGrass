@@ -1,5 +1,6 @@
 import SwiftUI
 import FamilyControls
+import UIKit
 import BlockOSDomain
 import BlockOSEnforcement
 
@@ -8,7 +9,7 @@ struct RootView: View {
     @State private var selectedTab: Tab = .session
     @State private var errorBannerTask: Task<Void, Never>?
 
-    enum Tab { case session, unlockMethods, history }
+    enum Tab { case session, challenges, history }
 
     var body: some View {
         Group {
@@ -27,7 +28,7 @@ struct RootView: View {
                         
                         switch selectedTab {
                         case .session: SessionView()
-                        case .unlockMethods: QRCodesView()
+                        case .challenges: ChallengeSettingsView()
                         case .history: HistoryView()
                         }
                     }
@@ -35,7 +36,7 @@ struct RootView: View {
                     // Refined Tab Bar
                     HStack(spacing: 0) {
                         TabButton(icon: "lock.shield", title: "Focus", tab: .session, selectedTab: $selectedTab)
-                        TabButton(icon: "key", title: "Unlocks", tab: .unlockMethods, selectedTab: $selectedTab)
+                        TabButton(icon: "figure.walk", title: "Tasks", tab: .challenges, selectedTab: $selectedTab)
                         TabButton(icon: "clock", title: "History", tab: .history, selectedTab: $selectedTab)
                     }
                     .padding(.top, 12)
@@ -176,7 +177,7 @@ private struct ActiveSessionView: View {
                     Text("Focus is Active")
                         .font(.system(size: 24, weight: .bold, design: .rounded))
                         .foregroundColor(.primary)
-                    Text("Selected apps are currently blocked.")
+                    Text("Selected apps are blocked until you complete a real-world task.")
                         .font(.system(size: 15, weight: .regular, design: .rounded))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -210,39 +211,22 @@ private struct ActiveSessionView: View {
                     
                     if session.state == .activeBlocked {
                         ActionCard(
+                            icon: "camera.viewfinder",
+                            title: "Touch Grass",
+                            subtitle: "Take a proof photo of the real-world prompt.",
+                            action: { Task { await container.beginUnlock(.touchGrassPhoto) } }
+                        )
+
+                        ActionCard(
                             icon: "timer",
                             title: "Wait 2 Minutes",
-                            subtitle: "Create healthy friction before unlocking.",
+                            subtitle: "Backup friction if the camera is unavailable.",
                             action: { Task { await container.beginUnlock(.timer120) } }
                         )
-                        
-                        ActionCard(
-                            icon: "qrcode.viewfinder",
-                            title: "Scan a QR Code",
-                            subtitle: "Physical barrier to unlock apps.",
-                            action: { Task { await container.beginUnlock(.qrCode) } }
-                        )
                     }
-                    
-                    if session.state == .unlockChallengeInProgress && session.activeUnlockMethod == .qrCode {
-                        VStack(spacing: 16) {
-                            HStack {
-                                Image(systemName: "qrcode.viewfinder")
-                                    .font(.system(size: 24))
-                                    .foregroundColor(.primary)
-                                Text("Ready to scan your physical QR code.")
-                                    .font(.system(size: 15, weight: .medium, design: .rounded))
-                                    .foregroundColor(.primary)
-                                Spacer()
-                            }
-                            .padding(20)
-                            .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 16))
-                            .shadow(color: Color.black.opacity(0.05), radius: 10, y: 5)
-                            
-                            ElegantButton(title: "Cancel Unlock", isPrimary: false) {
-                                Task { await container.cancelUnlock() }
-                            }
-                        }
+
+                    if session.state == .unlockChallengeInProgress && session.activeUnlockMethod == .touchGrassPhoto {
+                        TouchGrassUnlockView(sessionID: session.id)
                     }
                     
                     if session.state == .unlockPending {
@@ -304,7 +288,7 @@ private struct SetupSessionView: View {
                     Text("Reclaim your time.")
                         .font(.system(size: 28, weight: .bold, design: .rounded))
                         .foregroundColor(.primary)
-                    Text("Block distracting apps and create healthy friction.")
+                    Text("Set daily limits. When you hit them, your phone gets dumb until you move.")
                         .font(.system(size: 15, weight: .regular, design: .rounded))
                         .foregroundColor(.secondary)
                         .multilineTextAlignment(.center)
@@ -360,6 +344,20 @@ private struct SetupSessionView: View {
                             .padding(16)
                             .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 20))
                         }
+
+                        if let dailyLimitSummary = container.dailyLimitSummary {
+                            VStack(alignment: .leading, spacing: 6) {
+                                Text("Auto Block")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                    .foregroundColor(.secondary)
+                                    .textCase(.uppercase)
+                                Text(dailyLimitSummary)
+                                    .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.primary)
+                            }
+                            .padding(16)
+                            .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 20))
+                        }
                         
                         Button(action: { isPickerPresented = true }) {
                             HStack(spacing: 16) {
@@ -410,6 +408,138 @@ private struct SetupSessionView: View {
                 }
             }
         }
+    }
+}
+
+private struct TouchGrassUnlockView: View {
+    @EnvironmentObject private var container: AppContainer
+    let sessionID: UUID
+    @State private var isCameraPresented = false
+    @State private var capturedImage: UIImage?
+
+    private var prompt: String {
+        TouchGrassChallenge.prompt(for: sessionID)
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 18) {
+            HStack(alignment: .top, spacing: 14) {
+                Image(systemName: "camera.viewfinder")
+                    .font(.system(size: 22, weight: .semibold))
+                    .frame(width: 48, height: 48)
+                    .background(Color.green.opacity(0.15), in: Circle())
+                    .foregroundColor(.green)
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Touch Grass Challenge")
+                        .font(.system(size: 18, weight: .bold, design: .rounded))
+                    Text(prompt)
+                        .font(.system(size: 15, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+            }
+
+            if let capturedImage {
+                Image(uiImage: capturedImage)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(height: 180)
+                    .frame(maxWidth: .infinity)
+                    .clipShape(RoundedRectangle(cornerRadius: 18))
+                    .clipped()
+            }
+
+            VStack(spacing: 10) {
+                if UIImagePickerController.isSourceTypeAvailable(.camera) {
+                    ElegantButton(title: capturedImage == nil ? "Open Camera" : "Retake Photo", isPrimary: true) {
+                        isCameraPresented = true
+                    }
+                } else {
+                    ElegantButton(title: "Mark Task Complete", isPrimary: true) {
+                        Task { await container.completeTouchGrassUnlock() }
+                    }
+                }
+
+                ElegantButton(title: "Cancel Unlock", isPrimary: false) {
+                    Task { await container.cancelUnlock() }
+                }
+            }
+        }
+        .padding(20)
+        .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24))
+        .shadow(color: Color.black.opacity(0.05), radius: 10, y: 5)
+        .sheet(isPresented: $isCameraPresented) {
+            CameraCaptureView(image: $capturedImage)
+                .ignoresSafeArea()
+        }
+        .onChange(of: capturedImage) { _, image in
+            guard image != nil else {
+                return
+            }
+
+            Task { await container.completeTouchGrassUnlock() }
+        }
+    }
+}
+
+private struct CameraCaptureView: UIViewControllerRepresentable {
+    @Environment(\.dismiss) private var dismiss
+    @Binding var image: UIImage?
+
+    func makeUIViewController(context: Context) -> UIImagePickerController {
+        let picker = UIImagePickerController()
+        picker.sourceType = .camera
+        picker.cameraCaptureMode = .photo
+        picker.delegate = context.coordinator
+        return picker
+    }
+
+    func updateUIViewController(_ uiViewController: UIImagePickerController, context: Context) {}
+
+    func makeCoordinator() -> Coordinator {
+        Coordinator(image: $image, dismiss: dismiss)
+    }
+
+    final class Coordinator: NSObject, UINavigationControllerDelegate, UIImagePickerControllerDelegate {
+        @Binding private var image: UIImage?
+        private let dismiss: DismissAction
+
+        init(image: Binding<UIImage?>, dismiss: DismissAction) {
+            _image = image
+            self.dismiss = dismiss
+        }
+
+        func imagePickerController(
+            _ picker: UIImagePickerController,
+            didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey: Any]
+        ) {
+            image = info[.originalImage] as? UIImage
+            dismiss()
+        }
+
+        func imagePickerControllerDidCancel(_ picker: UIImagePickerController) {
+            dismiss()
+        }
+    }
+}
+
+private enum TouchGrassChallenge {
+    private static let prompts = [
+        "Take a photo of your hand touching grass.",
+        "Go outside and take a photo of a tree or hedge.",
+        "Take a photo of your shoes outside your front door.",
+        "Take a photo of the washing machine from another room.",
+        "Take a photo of daylight through an open doorway."
+    ]
+
+    static var previewPrompts: [String] {
+        prompts
+    }
+
+    static func prompt(for sessionID: UUID) -> String {
+        let seed = sessionID.uuidString.unicodeScalars.reduce(0) { $0 + Int($1.value) }
+        return prompts[seed % prompts.count]
     }
 }
 
@@ -562,6 +692,77 @@ private struct DangerButton: View {
             .padding(.horizontal, 18)
             .padding(.vertical, 18)
             .background(Color.red, in: RoundedRectangle(cornerRadius: 16))
+        }
+    }
+}
+
+private struct ChallengeSettingsView: View {
+    @EnvironmentObject private var container: AppContainer
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 0) {
+            Text("Unlock Tasks")
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+                .padding(.horizontal, 24)
+                .padding(.top, 24)
+                .padding(.bottom, 8)
+
+            Text("BlockOS uses software friction: selected apps lock after your daily limit, then a real-world photo task unlocks them.")
+                .font(.system(size: 15, weight: .regular, design: .rounded))
+                .foregroundColor(.secondary)
+                .padding(.horizontal, 24)
+                .padding(.bottom, 24)
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 20) {
+                    VStack(alignment: .leading, spacing: 14) {
+                        Label("Daily limit", systemImage: "hourglass")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+
+                        Text(container.dailyLimitSummary ?? "Finish onboarding and pick apps to enable automatic blocking.")
+                            .font(.system(size: 15, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+
+                        if let goalPlanSummary = container.goalPlanSummary {
+                            Text(goalPlanSummary)
+                                .font(.system(size: 14, weight: .semibold, design: .rounded))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 8)
+                                .background(Color.primary.opacity(0.06), in: Capsule())
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(20)
+                    .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24))
+                    .shadow(color: Color.black.opacity(0.03), radius: 10, y: 5)
+
+                    VStack(alignment: .leading, spacing: 14) {
+                        Label("Touch Grass", systemImage: "camera.viewfinder")
+                            .font(.system(size: 16, weight: .bold, design: .rounded))
+
+                        VStack(spacing: 10) {
+                            ForEach(TouchGrassChallenge.previewPrompts, id: \.self) { prompt in
+                                HStack(alignment: .top, spacing: 12) {
+                                    Image(systemName: "checkmark.circle.fill")
+                                        .foregroundColor(.green)
+                                    Text(prompt)
+                                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                                        .foregroundColor(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                    Spacer(minLength: 0)
+                                }
+                            }
+                        }
+                    }
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(20)
+                    .background(Color(UIColor.secondarySystemGroupedBackground), in: RoundedRectangle(cornerRadius: 24))
+                    .shadow(color: Color.black.opacity(0.03), radius: 10, y: 5)
+                }
+                .padding(.horizontal, 24)
+                .padding(.bottom, 40)
+            }
         }
     }
 }
@@ -736,7 +937,7 @@ private struct HistoryView: View {
                                         
                                         ForEach(session.unlockHistory, id: \.id) { attempt in
                                             HStack(spacing: 8) {
-                                                Image(systemName: attempt.method == .timer120 ? "timer" : "qrcode")
+                                                Image(systemName: attempt.method.historyIconName)
                                                     .font(.system(size: 12))
                                                     .foregroundColor(.secondary)
                                                 Text(attempt.method.displayName)
@@ -793,6 +994,15 @@ private extension UnlockMethod {
         switch self {
         case .timer120: "2-Min Wait"
         case .qrCode: "QR Code"
+        case .touchGrassPhoto: "Touch Grass"
+        }
+    }
+
+    var historyIconName: String {
+        switch self {
+        case .timer120: "timer"
+        case .qrCode: "qrcode"
+        case .touchGrassPhoto: "camera.viewfinder"
         }
     }
 }

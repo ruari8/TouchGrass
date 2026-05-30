@@ -59,6 +59,25 @@ struct FocusSessionEngineTests {
     }
 
     @Test
+    func touchGrassPhotoUnlockCompletesSession() throws {
+        let blockSet = BlockSet(name: "Default", targets: [])
+        let start = Date(timeIntervalSince1970: 150)
+        let active = try engine.activate(
+            engine.armSession(blockSet: blockSet, allowedUnlockMethods: [.touchGrassPhoto], now: start),
+            now: start
+        )
+
+        let unlock = try engine.beginUnlock(active, method: .touchGrassPhoto, now: start.addingTimeInterval(10))
+        let ready = try engine.markUnlockReady(unlock, method: .touchGrassPhoto, now: start.addingTimeInterval(60))
+        let unlocked = try engine.confirmUnlock(ready, now: start.addingTimeInterval(61))
+        let completed = try engine.completeSession(unlocked, now: start.addingTimeInterval(62))
+
+        #expect(completed.state == .completed)
+        #expect(completed.unlockHistory.first?.method == .touchGrassPhoto)
+        #expect(completed.unlockHistory.first?.outcome == .succeeded)
+    }
+
+    @Test
     func emergencyOverrideEndsSession() throws {
         let blockSet = BlockSet(name: "Default", targets: [])
         let start = Date(timeIntervalSince1970: 200)

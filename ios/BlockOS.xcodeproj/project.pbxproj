@@ -13,7 +13,8 @@
 		A684497B2F6423F900C85C75 /* BlockOSPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = A684497A2F6423F900C85C75 /* BlockOSPersistence */; };
 		B10000012F65000100AAA001 /* BlockOSShieldConfiguration.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 		B10000022F65000100AAA001 /* BlockOSShieldAction.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B10000122F65000100AAA001 /* BlockOSShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		B20000012F65000100AAA001 /* BlockOSUsageReport.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B20000112F65000100AAA001 /* BlockOSUsageReport.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B20000012F65000100AAA001 /* BlockOSUsageReport.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B20000112F65000100AAA001 /* BlockOSUsageReport.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C30000012F66000100AAA001 /* BlockOSDailyLimitMonitor.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = C30000112F66000100AAA001 /* BlockOSDailyLimitMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -38,6 +39,13 @@
 			remoteGlobalIDString = B20000B12F65000100AAA001;
 			remoteInfo = BlockOSUsageReport;
 		};
+		C30000512F66000100AAA001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = A68449552F6418D500C85C75 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = C30000B12F66000100AAA001;
+			remoteInfo = BlockOSDailyLimitMonitor;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -49,9 +57,20 @@
 			files = (
 				B10000012F65000100AAA001 /* BlockOSShieldConfiguration.appex in Embed App Extensions */,
 				B10000022F65000100AAA001 /* BlockOSShieldAction.appex in Embed App Extensions */,
-				B20000012F65000100AAA001 /* BlockOSUsageReport.appex in Embed App Extensions */,
+				C30000012F66000100AAA001 /* BlockOSDailyLimitMonitor.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		B20000312F65000100AAA001 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Extensions;
+			dstSubfolderSpec = 1;
+			files = (
+				B20000012F65000100AAA001 /* BlockOSUsageReport.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXCopyFilesBuildPhase section */
@@ -61,6 +80,7 @@
 		B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSShieldConfiguration.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B10000122F65000100AAA001 /* BlockOSShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		B20000112F65000100AAA001 /* BlockOSUsageReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSUsageReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C30000112F66000100AAA001 /* BlockOSDailyLimitMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSDailyLimitMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -82,6 +102,11 @@
 		B20000212F65000100AAA001 /* BlockOSUsageReport */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = BlockOSUsageReport;
+			sourceTree = "<group>";
+		};
+		C30000212F66000100AAA001 /* BlockOSDailyLimitMonitor */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = BlockOSDailyLimitMonitor;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -119,6 +144,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C30000412F66000100AAA001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -129,6 +161,7 @@
 				B10000212F65000100AAA001 /* BlockOSShieldConfiguration */,
 				B10000222F65000100AAA001 /* BlockOSShieldAction */,
 				B20000212F65000100AAA001 /* BlockOSUsageReport */,
+				C30000212F66000100AAA001 /* BlockOSDailyLimitMonitor */,
 				A684495E2F6418D500C85C75 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -140,6 +173,7 @@
 				B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */,
 				B10000122F65000100AAA001 /* BlockOSShieldAction.appex */,
 				B20000112F65000100AAA001 /* BlockOSUsageReport.appex */,
+				C30000112F66000100AAA001 /* BlockOSDailyLimitMonitor.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -154,6 +188,7 @@
 				A68449592F6418D500C85C75 /* Sources */,
 				A684495A2F6418D500C85C75 /* Frameworks */,
 				B10000312F65000100AAA001 /* Embed App Extensions */,
+				B20000312F65000100AAA001 /* Embed Foundation Extensions */,
 				A684495B2F6418D500C85C75 /* Resources */,
 			);
 			buildRules = (
@@ -162,6 +197,7 @@
 				B10000612F65000100AAA001 /* PBXTargetDependency */,
 				B10000622F65000100AAA001 /* PBXTargetDependency */,
 				B20000612F65000100AAA001 /* PBXTargetDependency */,
+				C30000612F66000100AAA001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				A684495F2F6418D500C85C75 /* BlockOS */,
@@ -243,6 +279,28 @@
 			productReference = B20000112F65000100AAA001 /* BlockOSUsageReport.appex */;
 			productType = "com.apple.product-type.extensionkit-extension";
 		};
+		C30000B12F66000100AAA001 /* BlockOSDailyLimitMonitor */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = C30000A12F66000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSDailyLimitMonitor" */;
+			buildPhases = (
+				C30000812F66000100AAA001 /* Sources */,
+				C30000412F66000100AAA001 /* Frameworks */,
+				C30000712F66000100AAA001 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			fileSystemSynchronizedGroups = (
+				C30000212F66000100AAA001 /* BlockOSDailyLimitMonitor */,
+			);
+			name = BlockOSDailyLimitMonitor;
+			packageProductDependencies = (
+			);
+			productName = BlockOSDailyLimitMonitor;
+			productReference = C30000112F66000100AAA001 /* BlockOSDailyLimitMonitor.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -255,6 +313,11 @@
 				TargetAttributes = {
 					A684495C2F6418D500C85C75 = {
 						CreatedOnToolsVersion = 26.0.1;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 					B10000B12F65000100AAA001 = {
 						CreatedOnToolsVersion = 26.0.1;
@@ -264,6 +327,19 @@
 					};
 					B20000B12F65000100AAA001 = {
 						CreatedOnToolsVersion = 26.0.1;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
+					};
+					C30000B12F66000100AAA001 = {
+						CreatedOnToolsVersion = 26.0.1;
+						SystemCapabilities = {
+							com.apple.ApplicationGroups.iOS = {
+								enabled = 1;
+							};
+						};
 					};
 				};
 			};
@@ -288,6 +364,7 @@
 				B10000B12F65000100AAA001 /* BlockOSShieldConfiguration */,
 				B10000B22F65000100AAA001 /* BlockOSShieldAction */,
 				B20000B12F65000100AAA001 /* BlockOSUsageReport */,
+				C30000B12F66000100AAA001 /* BlockOSDailyLimitMonitor */,
 			);
 		};
 /* End PBXProject section */
@@ -315,6 +392,13 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 		B20000712F65000100AAA001 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		C30000712F66000100AAA001 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -352,6 +436,13 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		C30000812F66000100AAA001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -369,6 +460,11 @@
 			isa = PBXTargetDependency;
 			target = B20000B12F65000100AAA001 /* BlockOSUsageReport */;
 			targetProxy = B20000512F65000100AAA001 /* PBXContainerItemProxy */;
+		};
+		C30000612F66000100AAA001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = C30000B12F66000100AAA001 /* BlockOSDailyLimitMonitor */;
+			targetProxy = C30000512F66000100AAA001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -503,6 +599,7 @@
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "BlockOS uses the camera so you can complete a real-world unlock challenge.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -536,6 +633,7 @@
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_NSCameraUsageDescription = "BlockOS uses the camera so you can complete a real-world unlock challenge.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -566,9 +664,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.ManagedSettingsUI.shield-configuration-service";
-				INFOPLIST_KEY_NSExtension_NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).ShieldConfigurationExtension";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ExtensionPlists/BlockOSShieldConfiguration-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -592,9 +689,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.ManagedSettingsUI.shield-configuration-service";
-				INFOPLIST_KEY_NSExtension_NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).ShieldConfigurationExtension";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ExtensionPlists/BlockOSShieldConfiguration-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -618,9 +714,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.ManagedSettings.shield-action-service";
-				INFOPLIST_KEY_NSExtension_NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).ShieldActionExtension";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ExtensionPlists/BlockOSShieldAction-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -644,9 +739,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_NSExtension_NSExtensionPointIdentifier = "com.apple.ManagedSettings.shield-action-service";
-				INFOPLIST_KEY_NSExtension_NSExtensionPrincipalClass = "$(PRODUCT_MODULE_NAME).ShieldActionExtension";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ExtensionPlists/BlockOSShieldAction-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -670,8 +764,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_EXAppExtensionAttributes_EXExtensionPointIdentifier = "com.apple.deviceactivityui.report-extension";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ExtensionPlists/BlockOSUsageReport-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -695,8 +789,8 @@
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_EXAppExtensionAttributes_EXExtensionPointIdentifier = "com.apple.deviceactivityui.report-extension";
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ExtensionPlists/BlockOSUsageReport-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -705,6 +799,56 @@
 				);
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.UsageReport;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Release;
+		};
+		C30000912F66000100AAA001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = BlockOSDailyLimitMonitor/BlockOSDailyLimitMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YM9WKCY3CH;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ExtensionPlists/BlockOSDailyLimitMonitor-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.DailyLimitMonitor;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SKIP_INSTALL = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = "1,2";
+			};
+			name = Debug;
+		};
+		C30000922F66000100AAA001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				APPLICATION_EXTENSION_API_ONLY = YES;
+				CODE_SIGN_ENTITLEMENTS = BlockOSDailyLimitMonitor/BlockOSDailyLimitMonitor.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = YM9WKCY3CH;
+				GENERATE_INFOPLIST_FILE = NO;
+				INFOPLIST_FILE = "ExtensionPlists/BlockOSDailyLimitMonitor-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.DailyLimitMonitor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -756,6 +900,15 @@
 			buildConfigurations = (
 				B20000912F65000100AAA001 /* Debug */,
 				B20000922F65000100AAA001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		C30000A12F66000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSDailyLimitMonitor" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				C30000912F66000100AAA001 /* Debug */,
+				C30000922F66000100AAA001 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

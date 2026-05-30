@@ -40,6 +40,7 @@ public struct BlockSet: Codable, Hashable, Sendable, Identifiable {
 public enum UnlockMethod: String, Codable, CaseIterable, Sendable {
     case timer120
     case qrCode
+    case touchGrassPhoto
 }
 
 public enum FocusSessionState: String, Codable, Sendable {

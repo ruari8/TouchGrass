@@ -4,15 +4,17 @@ This document keeps future challenge and anti-circumvention ideas from getting l
 
 ## MVP Now
 
-- Timer unlock: fixed 120-second delay.
-- QR unlock: app-generated code that the user can print, save, or share elsewhere.
+- Daily selected-use limit through Screen Time / Family Controls.
+- Automatic shielding when selected app/category usage reaches the daily limit.
+- Touch Grass photo unlock: take a real-world proof photo to restore access.
+- Timer unlock: fixed 120-second fallback when camera capture is unavailable.
 
 ## Physical Challenge Ideas
 
-- Push-up or sit-up count verified by motion heuristics.
 - Stand up and walk for a required duration.
-- Walk to a saved QR code location in the house.
+- Walk to a saved location in the house.
 - Tap a paired physical token or NFC sticker.
+- Push-up or sit-up count verified by motion heuristics.
 
 ## Mental Challenge Ideas
 
@@ -27,6 +29,7 @@ This document keeps future challenge and anti-circumvention ideas from getting l
 - Take a live selfie in a different room.
 - Capture a hand-on-object proof photo.
 - Take a picture outdoors with liveness checks.
+- Rotate prompts daily so users cannot pre-stage the same proof every time.
 
 ## Motion and Location Ideas
 
@@ -50,6 +53,8 @@ This document keeps future challenge and anti-circumvention ideas from getting l
 - Delayed exit after changing rules.
 - History flag for aborted or forced exits.
 - Distinguish normal unlock vs override unlock in analytics.
+- Image classification for the chosen prompt.
+- Camera liveness checks and stale-photo prevention.
 
 ## Product Notes
 

@@ -1,6 +1,8 @@
+import Combine
 import DeviceActivity
 import FamilyControls
 import SwiftUI
+import UniformTypeIdentifiers
 import BlockOSDomain
 import BlockOSEnforcement
 
@@ -8,23 +10,49 @@ struct OnboardingFlowView: View {
     @EnvironmentObject private var container: AppContainer
     @State private var step: Step = .permission
     @State private var isActivityPickerPresented = false
-    @State private var feeling: OnboardingFeeling = .concerned
-    @State private var reductionFocus = "Social scrolling"
-    @State private var idealDailyMinutes = 90.0
-    @State private var socialMediaMinutes = 45.0
-    @State private var didSkipIntake = false
-    @State private var aiRecommendation: OnboardingCoachRecommendation?
-    @State private var aiRecommendationSignature: String?
-    @State private var aiRecommendationError: String?
-    @State private var isLoadingAIRecommendation = false
-    @State private var hasRequestedInitialAIRecommendation = false
-
-    private let onboardingCoach = OpenRouterOnboardingCoach()
+    @State private var schedulePreset: BlockSchedulePreset = .allDay
+    @State private var customStartHour: Int = 9
+    @State private var customEndHour: Int = 18
+    @State private var usageSummary: SharedOnboardingUsageSummary?
+    @State private var budgetPlan: [CategoryBudgetDraft] = []
+    @State private var hasCustomizedBudgetPlan = false
+    @State private var skippedIntake = false
+    @State private var usageSummaryLoadIssue: String?
+    @State private var usageSummaryTimedOut = false
+    private let usageSummaryRefreshTimer = Timer.publish(every: 1, on: .main, in: .common).autoconnect()
 
     private enum Step: Int, CaseIterable {
         case permission
         case intake
         case configuration
+    }
+
+    private enum BlockSchedulePreset: String, CaseIterable {
+        case allDay    = "All day"
+        case work      = "Work hours"
+        case evenings  = "Evenings"
+        case mornings  = "Mornings"
+        case custom    = "Custom"
+
+        var detail: String {
+            switch self {
+            case .allDay:   return "Count all day"
+            case .work:     return "9am – 6pm"
+            case .evenings: return "6pm – 11pm"
+            case .mornings: return "6am – 12pm"
+            case .custom:   return "Set your own hours"
+            }
+        }
+
+        var schedule: BlockSchedule? {
+            switch self {
+            case .allDay:   return nil
+            case .work:     return .workHours
+            case .evenings: return .evenings
+            case .mornings: return .mornings
+            case .custom:   return nil
+            }
+        }
     }
 
     var body: some View {
@@ -50,7 +78,12 @@ struct OnboardingFlowView: View {
                 .tabViewStyle(.page(indexDisplayMode: .never))
             }
         }
-        .familyActivityPicker(isPresented: $isActivityPickerPresented, selection: $container.activitySelection)
+        .familyActivityPicker(
+            headerText: blockPickerHeaderText,
+            footerText: blockPickerFooterText,
+            isPresented: $isActivityPickerPresented,
+            selection: $container.activitySelection
+        )
         .onChange(of: container.activitySelection) { previousSelection, selection in
             Task { await container.persistSelection(selection, previousSelection: previousSelection) }
         }
@@ -58,19 +91,39 @@ struct OnboardingFlowView: View {
             if container.authorizationStatus == .approved {
                 step = .intake
             }
+
+            loadCachedUsageSummary()
+
+            if usageSummary == nil {
+                Task { await refreshUsageSummaryAfterReportRenders() }
+            }
         }
         .onChange(of: container.authorizationStatus) { _, status in
             if status == .approved && step == .permission {
                 withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                     step = .intake
                 }
+
+                Task { await refreshUsageSummaryAfterReportRenders() }
             }
         }
-        .onChange(of: feeling) { _, _ in markRecommendationStale() }
-        .onChange(of: reductionFocus) { _, _ in markRecommendationStale() }
-        .onChange(of: idealDailyMinutes) { _, _ in markRecommendationStale() }
-        .onChange(of: socialMediaMinutes) { _, _ in markRecommendationStale() }
+        .task(id: step) {
+            guard step == .intake || step == .configuration else {
+                return
+            }
+
+            await refreshUsageSummaryAfterReportRenders()
+        }
+        .onReceive(usageSummaryRefreshTimer) { _ in
+            guard step == .intake || step == .configuration else {
+                return
+            }
+
+            loadCachedUsageSummary()
+        }
     }
+
+    // MARK: - Header
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -87,7 +140,8 @@ struct OnboardingFlowView: View {
 
                 if step == .intake {
                     Button("Skip") {
-                        didSkipIntake = true
+                        skippedIntake = true
+
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                             step = .configuration
                         }
@@ -111,13 +165,15 @@ struct OnboardingFlowView: View {
         .padding(.bottom, 12)
     }
 
+    // MARK: - Step 1: Permission
+
     private var permissionStep: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 24) {
                 spotlightCard(
                     eyebrow: "Step 1",
                     title: "Enable Screen Time access",
-                    body: "BlockOS needs Family Controls permission before it can read your usage patterns, configure app shields, or enforce the focus setup you choose."
+                    body: "BlockOS needs Family Controls permission before it can read your usage patterns, enforce daily limits, and shield apps after your limit is reached."
                 ) {
                     VStack(spacing: 12) {
                         statusPill(
@@ -146,9 +202,9 @@ struct OnboardingFlowView: View {
                 bulletCard(
                     title: "What this unlocks",
                     bullets: [
-                        "See your current daily usage and biggest time sinks.",
-                        "Choose what to block without leaving onboarding.",
-                        "Set a target that turns your phone into something more intentional."
+                        "See your real daily average instead of guessing.",
+                        "Break usage down by Screen Time category before you pick blockers.",
+                        "Start from a strict category budget, then soften the parts you actually need."
                     ]
                 )
             }
@@ -157,154 +213,43 @@ struct OnboardingFlowView: View {
         }
     }
 
+    // MARK: - Step 2: Intake
+
     private var intakeStep: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
                 spotlightCard(
-                    eyebrow: "Step 2",
-                    title: "Look at the pattern first",
-                    body: "Before you choose blocks, BlockOS should show you what your phone is currently training you to do."
+                    eyebrow: "Your last 7 days",
+                    title: "Here is your real average",
+                    body: "See the total first, then expand each category to see which apps are actually driving it."
                 ) {
-                    UsageInsightsReportCard()
-                        .frame(minHeight: 250)
+                    usageInsightsSection
                 }
 
                 spotlightCard(
-                    eyebrow: "Reflection",
-                    title: "How does your current screen time feel?",
-                    body: "This is optional, but the recommendation gets better if BlockOS knows whether you feel calm, uneasy, or outmatched."
+                    eyebrow: "Starter plan",
+                    title: "Set a category budget",
+                    body: "Start from the recommendation, or use the 1-hour social starter if Screen Time data is not ready yet."
                 ) {
-                    feelingSelector
-                }
-
-                spotlightCard(
-                    eyebrow: "Goal",
-                    title: "What do you want to reduce first?",
-                    body: "Name the behavior you want this phone to stop rewarding."
-                ) {
-                    VStack(alignment: .leading, spacing: 14) {
-                        TextField("Social scrolling, shopping, late-night browsing...", text: $reductionFocus)
-                            .textInputAutocapitalization(.sentences)
-                            .font(.system(size: 16, weight: .medium, design: .rounded))
-                            .padding(16)
-                            .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 18))
-
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("Ideal daily screen time")
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                            Text(minutesLabel(for: Int(idealDailyMinutes)))
-                                .font(.system(size: 30, weight: .bold, design: .rounded))
-                            Slider(
-                                value: $idealDailyMinutes,
-                                in: 30...300,
-                                step: 15,
-                                onEditingChanged: { _ in clampBreakdown() }
-                            )
-                            .tint(.primary)
-                        }
-                    }
-                }
-
-                spotlightCard(
-                    eyebrow: "Breakdown",
-                    title: "Split that time with intent",
-                    body: "A simple starting split is social media versus everything else. The buckets should add up to your daily target."
-                ) {
-                    VStack(spacing: 18) {
-                        VStack(alignment: .leading, spacing: 6) {
-                            HStack {
-                                Text("Social media")
-                                Spacer()
-                                Text(minutesLabel(for: Int(socialMediaMinutes)))
-                                    .foregroundColor(.secondary)
-                            }
-                            Slider(
-                                value: $socialMediaMinutes,
-                                in: 0...idealDailyMinutes,
-                                step: 15,
-                                onEditingChanged: { _ in clampBreakdown() }
-                            )
-                            .tint(.primary)
-                        }
-
-                        HStack {
-                            breakdownMetric(title: "Social", value: minutesLabel(for: Int(socialMediaMinutes)))
-                            breakdownMetric(title: "Everything Else", value: minutesLabel(for: everythingElseMinutes))
-                        }
-                    }
-                }
-
-                spotlightCard(
-                    eyebrow: "Recommendation",
-                    title: activeRecommendationTitle,
-                    body: activeRecommendationSubtitle
-                ) {
-                    VStack(alignment: .leading, spacing: 10) {
-                        Text(activeRecommendationBody)
-                            .font(.system(size: 15, weight: .medium, design: .rounded))
-                            .foregroundColor(.secondary)
-                        if !activeRecommendedBlockTargets.isEmpty {
-                            Text("Start by blocking: \(activeRecommendedBlockTargets.joined(separator: ", "))")
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                        }
-
-                        if let aiRecommendationError {
-                            Text(aiRecommendationError)
-                                .font(.system(size: 13, weight: .medium, design: .rounded))
-                                .foregroundColor(.secondary)
-                        } else if !onboardingCoach.isConfigured {
-                            Text("Using the local BlockOS recommendation. Add `BLOCKOS_OPENROUTER_API_KEY` to enable the AI coach.")
-                                .font(.system(size: 13, weight: .medium, design: .rounded))
-                                .foregroundColor(.secondary)
-                        } else if isRecommendationStale {
-                            Text("Your answers changed. Refresh the AI recommendation to match your latest plan.")
-                                .font(.system(size: 13, weight: .medium, design: .rounded))
-                                .foregroundColor(.secondary)
-                        }
-
-                        HStack(spacing: 12) {
-                            if isLoadingAIRecommendation {
-                                ProgressView()
-                                    .controlSize(.small)
-                            }
-
-                            if onboardingCoach.isConfigured {
-                                Button(isRecommendationStale || aiRecommendation == nil ? "Generate AI Recommendation" : "Refresh AI Recommendation") {
-                                    Task { await refreshAIRecommendation() }
-                                }
-                                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                                .foregroundColor(.primary)
-                                .disabled(isLoadingAIRecommendation)
-                            }
-                        }
-                    }
-                }
-                .task {
-                    guard
-                        step == .intake,
-                        onboardingCoach.isConfigured,
-                        !hasRequestedInitialAIRecommendation
-                    else {
-                        return
-                    }
-
-                    hasRequestedInitialAIRecommendation = true
-                    await refreshAIRecommendation()
+                    budgetPlannerSection
                 }
 
                 VStack(spacing: 12) {
                     OnboardingPrimaryButton(
-                        title: "Continue to Configuration",
-                        subtitle: "Choose the apps that should hit the wall first."
+                        title: "Continue to Blocking Setup",
+                        subtitle: skippedIntake
+                            ? "Pick what to block without saving a screen-time target."
+                            : "Carry this target into app and category blocking.",
+                        isDisabled: !skippedIntake && budgetPlan.isEmpty
                     ) {
-                        didSkipIntake = false
+                        skippedIntake = false
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                             step = .configuration
                         }
                     }
 
-                    OnboardingSecondaryButton(title: "Skip This For Now") {
-                        didSkipIntake = true
+                    OnboardingSecondaryButton(title: "Skip — I'll just pick apps to block") {
+                        skippedIntake = true
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
                             step = .configuration
                         }
@@ -316,32 +261,50 @@ struct OnboardingFlowView: View {
         }
     }
 
+    // MARK: - Step 3: Configuration
+
     private var configurationStep: some View {
         ScrollView(showsIndicators: false) {
             VStack(spacing: 20) {
+                if !skippedIntake {
+                    spotlightCard(
+                        eyebrow: "Target",
+                        title: "What you are enforcing",
+                        body: "This is the budget the blocker should protect. The category names match Apple’s picker below."
+                    ) {
+                        configuredBudgetSummary
+                    }
+                }
+
                 spotlightCard(
                     eyebrow: "Step 3",
                     title: "Choose what gets blocked",
-                    body: "This is where BlockOS turns your plan into friction. Pick the apps, categories, and sites that should stop being available on impulse."
+                    body: "Pick the apps, categories, and websites that should lock after your daily limit."
                 ) {
                     VStack(spacing: 12) {
-                        if !didSkipIntake {
-                            HStack(spacing: 12) {
-                                breakdownMetric(title: "Daily Goal", value: minutesLabel(for: Int(idealDailyMinutes)))
-                                breakdownMetric(title: "Social", value: minutesLabel(for: Int(socialMediaMinutes)))
-                                breakdownMetric(title: "Other", value: minutesLabel(for: everythingElseMinutes))
+                        if !skippedIntake {
+                            HStack {
+                                Label(totalBudgetLabel + " daily target", systemImage: "timer")
+                                    .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.secondary)
+                                Spacer()
                             }
                         }
 
                         OnboardingPrimaryButton(
-                            title: "Select Apps To Block",
+                            title: "Select Apps to Block",
                             subtitle: container.selectionSummary
                         ) {
                             isActivityPickerPresented = true
                         }
 
                         if !container.makePreviewTargets().isEmpty {
-                            Text("Current selection: \(container.selectionSummary)")
+                            Text(container.selectionSummary)
+                                .font(.system(size: 14, weight: .medium, design: .rounded))
+                                .foregroundColor(.secondary)
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                        } else if !skippedIntake {
+                            Text("Start with the categories that blow through the target fastest, then add any specific apps you still want blocked.")
                                 .font(.system(size: 14, weight: .medium, design: .rounded))
                                 .foregroundColor(.secondary)
                                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -349,19 +312,18 @@ struct OnboardingFlowView: View {
                     }
                 }
 
-                bulletCard(
-                    title: "How this setup will work",
-                    bullets: [
-                        "BlockOS can only add more blocks during an active focus session.",
-                        "Emergency Unblock still exists when real life interrupts the plan.",
-                        "The branded shield now sends people back to BlockOS instead of the generic Restricted screen."
-                    ]
-                )
+                spotlightCard(
+                    eyebrow: "When to block",
+                    title: "Daily limit window",
+                    body: "Set when usage counts toward the daily limit. Leave on 'All day' for the normal dumb-phone mode."
+                ) {
+                    scheduleSection
+                }
 
                 VStack(spacing: 12) {
                     OnboardingPrimaryButton(
                         title: "Finish Setup",
-                        subtitle: "Save this setup and drop into the main app.",
+                        subtitle: "Save daily limits and turn on automatic blocking.",
                         isDisabled: container.makePreviewTargets().isEmpty
                     ) {
                         Task {
@@ -371,7 +333,7 @@ struct OnboardingFlowView: View {
 
                     OnboardingSecondaryButton(title: "Back") {
                         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
-                            step = didSkipIntake ? .intake : .intake
+                            step = .intake
                         }
                     }
                 }
@@ -381,123 +343,426 @@ struct OnboardingFlowView: View {
         }
     }
 
-    private var feelingSelector: some View {
-        VStack(spacing: 10) {
-            ForEach(OnboardingFeeling.allCases, id: \.self) { currentFeeling in
-                Button {
-                    feeling = currentFeeling
-                } label: {
-                    HStack {
-                        Text(currentFeeling.displayName)
-                            .font(.system(size: 16, weight: .semibold, design: .rounded))
-                        Spacer()
-                        Image(systemName: feeling == currentFeeling ? "checkmark.circle.fill" : "circle")
-                            .font(.system(size: 18, weight: .bold))
+    // MARK: - Budget planner
+
+    private var usageInsightsSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            UsageInsightsReportLoader()
+
+            if let usageSummary, usageSummary.hasData {
+                HStack(spacing: 10) {
+                    statusPill(icon: "chart.bar.fill", text: "\(usageSummary.averageDailyText) / day now")
+                    statusPill(icon: "scope", text: "\(usageSummary.recommendedDailyText) suggested")
+                }
+            } else if let usageSummary, !usageSummary.hasData {
+                UsageInsightsInlineStatus(
+                    title: "No recent Screen Time data",
+                    message: "The report came back, but iOS did not provide usable category history for the last 7 days yet."
+                )
+            } else if let usageSummaryLoadIssue {
+                UsageInsightsInlineStatus(
+                    title: "Screen Time report unavailable",
+                    message: usageSummaryLoadIssue
+                )
+            } else if usageSummaryTimedOut {
+                UsageInsightsInlineStatus(
+                    title: "Budget controls are still loading",
+                    message: "The report above is ready, but the budget controls below have not finished syncing from Screen Time yet."
+                )
+            } else {
+                HStack(spacing: 10) {
+                    ProgressView()
+                        .controlSize(.regular)
+                    Text("Loading budget controls from this report.")
+                        .font(.system(size: 14, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+            }
+
+            Button("Refresh report") {
+                reloadUsageSummary()
+            }
+            .font(.system(size: 14, weight: .bold, design: .rounded))
+            .foregroundColor(.primary)
+        }
+    }
+
+    private var budgetPlannerSection: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            if let usageSummary, usageSummary.hasData, !budgetPlan.isEmpty {
+                VStack(alignment: .leading, spacing: 12) {
+                    HStack(spacing: 12) {
+                        budgetHero(
+                            title: "Current",
+                            value: usageSummary.averageDailyText,
+                            caption: "what the last week actually looks like"
+                        )
+
+                        budgetHero(
+                            title: "Target",
+                            value: totalBudgetLabel,
+                            caption: "fully editable below"
+                        )
                     }
+
+                    HStack(spacing: 10) {
+                        statusPill(icon: "scope", text: "Recommended \(usageSummary.recommendedDailyText) / day")
+
+                        Button("Use recommendation") {
+                            applyRecommendedPlan(usageSummary.planRows)
+                        }
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .foregroundColor(.primary)
+                    }
+
+                    Text("Each row shows your current daily average next to the budget you want BlockOS to protect.")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+
+                VStack(spacing: 10) {
+                    ForEach(Array(budgetPlan.enumerated()), id: \.element.id) { index, row in
+                        budgetRow(index: index, row: row)
+                    }
+                }
+
+                Text("The next screen uses the same category names from Apple’s picker, so the blocker setup maps cleanly to this plan.")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+            } else if let usageSummary, !usageSummary.hasData {
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Waiting on real category budgets")
+                        .font(.system(size: 16, weight: .semibold, design: .rounded))
+                    Text("The Screen Time report came back without usable history, so BlockOS cannot recommend category budgets yet. You can refresh, or skip this step and go straight to blocker setup.")
+                        .font(.system(size: 13, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+
+                    Button("Refresh categories") {
+                        reloadUsageSummary()
+                    }
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
                     .foregroundColor(.primary)
-                    .padding(16)
-                    .background(
-                        RoundedRectangle(cornerRadius: 18)
-                            .fill(feeling == currentFeeling ? Color.primary.opacity(0.08) : Color.primary.opacity(0.03))
-                    )
+
+                    starterPlanButton
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(18)
+                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 20))
+            } else {
+                VStack(alignment: .leading, spacing: 12) {
+                    if let usageSummaryLoadIssue {
+                        Text("Screen Time planner unavailable")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        Text(usageSummaryLoadIssue)
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                    } else if usageSummaryTimedOut {
+                        Text("Budget controls are still loading")
+                            .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        Text("The report above is already visible. The editable budget rows below are still syncing from Screen Time. Refresh once more, or skip this step and continue to blocker setup.")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                    } else {
+                        HStack(spacing: 12) {
+                            ProgressView()
+                                .controlSize(.regular)
+                            Text("Loading your Screen Time categories")
+                                .font(.system(size: 16, weight: .semibold, design: .rounded))
+                        }
+
+                        Text("The planner only appears once the report above finishes loading the real category breakdown.")
+                            .font(.system(size: 13, weight: .medium, design: .rounded))
+                            .foregroundColor(.secondary)
+                    }
+
+                    Button("Refresh categories") {
+                        reloadUsageSummary()
+                    }
+                    .font(.system(size: 14, weight: .bold, design: .rounded))
+                    .foregroundColor(.primary)
+
+                    starterPlanButton
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(18)
+                .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 20))
+            }
+        }
+    }
+
+    private var starterPlanButton: some View {
+        Button {
+            applyStarterPlan()
+        } label: {
+            HStack {
+                Label("Use 1h social starter", systemImage: "bolt.fill")
+                Spacer()
+                Image(systemName: "chevron.right")
+                    .font(.system(size: 12, weight: .bold))
+                    .foregroundColor(.secondary)
+            }
+            .font(.system(size: 14, weight: .bold, design: .rounded))
+            .foregroundColor(.primary)
+            .padding(14)
+            .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 16))
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func budgetHero(title: String, value: String, caption: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+
+            Text(value)
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+
+            Text(caption)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 22))
+    }
+
+    private func budgetRow(index: Int, row: CategoryBudgetDraft) -> some View {
+        let currentLabel = row.currentAverageText == "Not loaded"
+            ? "Current not loaded"
+            : "Current \(row.currentAverageText) / day"
+
+        return VStack(alignment: .leading, spacing: 12) {
+            HStack(alignment: .top, spacing: 12) {
+                Image(systemName: row.icon)
+                    .font(.system(size: 13, weight: .bold))
+                    .frame(width: 36, height: 36)
+                    .background(row.tint.opacity(0.16), in: Circle())
+                    .foregroundColor(row.tint)
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text(row.title)
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .layoutPriority(1)
+
+                    Text(currentLabel)
+                        .font(.system(size: 12, weight: .medium, design: .rounded))
+                        .foregroundColor(.secondary)
+                }
+
+                Spacer(minLength: 12)
+
+                Text(minutesLabel(for: row.targetMinutes))
+                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 8)
+                    .background(Color.primary.opacity(0.06), in: Capsule())
+            }
+
+            HStack {
+                Button {
+                    updateBudget(at: index, delta: -row.stepSize)
+                } label: {
+                    HStack(spacing: 6) {
+                        Image(systemName: "minus")
+                        Text("Less")
+                    }
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .frame(minWidth: 88, minHeight: 44)
+                    .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
                 }
                 .buttonStyle(.plain)
+                .accessibilityLabel("Decrease \(row.title) budget")
+
+                Spacer()
+
+                Text("Target")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .textCase(.uppercase)
+
+                Spacer()
+
+                Button {
+                    updateBudget(at: index, delta: row.stepSize)
+                } label: {
+                    HStack(spacing: 6) {
+                        Text("More")
+                        Image(systemName: "plus")
+                    }
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .frame(minWidth: 88, minHeight: 44)
+                    .background(Color.primary.opacity(0.06), in: RoundedRectangle(cornerRadius: 14))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel("Increase \(row.title) budget")
+            }
+        }
+        .padding(14)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 18))
+    }
+
+    private var configuredBudgetSummary: some View {
+        VStack(alignment: .leading, spacing: 14) {
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                Text(totalBudgetLabel)
+                    .font(.system(size: 34, weight: .bold, design: .rounded))
+                Text("/ day")
+                    .font(.system(size: 15, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+            }
+
+            LazyVGrid(columns: [GridItem(.adaptive(minimum: 150), spacing: 10)], spacing: 10) {
+                ForEach(budgetPlan.filter { $0.targetMinutes > 0 }, id: \.id) { row in
+                    HStack(spacing: 10) {
+                        Image(systemName: row.icon)
+                            .font(.system(size: 11, weight: .bold))
+                            .frame(width: 28, height: 28)
+                            .background(row.tint.opacity(0.15), in: Circle())
+                            .foregroundColor(row.tint)
+
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(row.title)
+                                .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Text(minutesLabel(for: row.targetMinutes))
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer(minLength: 0)
+                    }
+                    .padding(12)
+                    .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 16))
+                }
             }
         }
     }
 
-    private var everythingElseMinutes: Int {
-        max(Int(idealDailyMinutes) - Int(socialMediaMinutes), 0)
-    }
+    // MARK: - Schedule section
 
-    private var fallbackRecommendationTitle: String {
-        switch feeling {
-        case .okay:
-            return "You do not need to go nuclear. Make the phone a little harder to abuse, not impossible to use."
-        case .concerned:
-            return "Aim for a visible cut, not a fantasy number. The first win is proving you can stay below your old baseline."
-        case .frustrated:
-            return "Use a tighter social bucket and make your worst habit physically inconvenient to reach."
-        case .overwhelmed:
-            return "Start strict. Reduce the cheap dopamine first, then earn flexibility back once the compulsion fades."
-        }
-    }
+    private var scheduleSection: some View {
+        VStack(spacing: 12) {
+            LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 10) {
+                ForEach(BlockSchedulePreset.allCases, id: \.self) { preset in
+                    Button {
+                        schedulePreset = preset
+                    } label: {
+                        VStack(spacing: 3) {
+                            Text(preset.rawValue)
+                                .font(.system(size: 13, weight: .bold, design: .rounded))
+                            Text(preset.detail)
+                                .font(.system(size: 11, weight: .medium, design: .rounded))
+                                .foregroundColor(
+                                    schedulePreset == preset
+                                        ? Color(UIColor.systemBackground).opacity(0.7)
+                                        : .secondary
+                                )
+                        }
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 12)
+                        .background(
+                            schedulePreset == preset
+                                ? Color.primary
+                                : Color.primary.opacity(0.07),
+                            in: RoundedRectangle(cornerRadius: 14)
+                        )
+                        .foregroundColor(
+                            schedulePreset == preset
+                                ? Color(UIColor.systemBackground)
+                                : .primary
+                        )
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
 
-    private var fallbackRecommendationBody: String {
-        if didSkipIntake {
-            return "You skipped the reflection step, so BlockOS will keep the setup lean: choose the apps that derail you most often and start with a simple block list."
-        }
+            if schedulePreset == .custom {
+                HStack(spacing: 16) {
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("From")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .textCase(.uppercase)
+                        Picker("Start", selection: $customStartHour) {
+                            ForEach(0..<24, id: \.self) { h in
+                                Text(hourLabel(h)).tag(h)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(height: 150)
+                    }
 
-        let socialShare = idealDailyMinutes == 0 ? 0 : Int((socialMediaMinutes / idealDailyMinutes) * 100)
-        return "Set your first target to \(minutesLabel(for: Int(idealDailyMinutes))) total, with \(socialShare)% of it reserved for social apps. Focus on \(reductionFocus.lowercased()) first, then expand the block list once the habit starts fighting back."
-    }
-
-    private var fallbackRecommendedBlockTargets: [String] {
-        let focus = reductionFocus.lowercased()
-        var targets: [String] = []
-
-        if focus.contains("social") || focus.contains("scroll") {
-            targets.append(contentsOf: ["Instagram", "TikTok", "X"])
-        }
-
-        if focus.contains("shop") || focus.contains("market") {
-            targets.append(contentsOf: ["Vinted", "Amazon", "eBay"])
-        }
-
-        if focus.contains("video") {
-            targets.append(contentsOf: ["YouTube", "Netflix"])
-        }
-
-        return Array(Set(targets)).sorted()
-    }
-
-    private var activeRecommendationTitle: String {
-        aiRecommendation?.headline ?? "Suggested starting plan"
-    }
-
-    private var activeRecommendationSubtitle: String {
-        if let aiRecommendation {
-            switch aiRecommendation.strictness {
-            case .gentle:
-                return "AI recommendation • gentle starting plan"
-            case .balanced:
-                return "AI recommendation • balanced starting plan"
-            case .strict:
-                return "AI recommendation • strict starting plan"
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Until")
+                            .font(.system(size: 12, weight: .bold, design: .rounded))
+                            .foregroundColor(.secondary)
+                            .textCase(.uppercase)
+                        Picker("End", selection: $customEndHour) {
+                            ForEach(0..<24, id: \.self) { h in
+                                Text(hourLabel(h)).tag(h)
+                            }
+                        }
+                        .pickerStyle(.wheel)
+                        .frame(height: 150)
+                    }
+                }
+                .padding(.top, 4)
             }
         }
-
-        return fallbackRecommendationTitle
     }
 
-    private var activeRecommendationBody: String {
-        if let aiRecommendation {
-            return "\(aiRecommendation.summary) \(aiRecommendation.firstAction)"
+    // MARK: - Helpers
+
+    private var totalBudgetMinutes: Int {
+        budgetPlan.reduce(0) { $0 + $1.targetMinutes }
+    }
+
+    private var totalBudgetLabel: String {
+        budgetPlan.isEmpty ? "—" : minutesLabel(for: totalBudgetMinutes)
+    }
+
+    private var blockPickerHeaderText: String? {
+        guard !skippedIntake else {
+            return "Choose the apps and categories BlockOS should put behind friction."
         }
 
-        return fallbackRecommendationBody
-    }
-
-    private var activeRecommendedBlockTargets: [String] {
-        guard let aiRecommendation, !aiRecommendation.recommendedBlockTargets.isEmpty else {
-            return fallbackRecommendedBlockTargets
+        guard !budgetPlan.isEmpty else {
+            return nil
         }
 
-        return aiRecommendation.recommendedBlockTargets
+        if let usageSummary, usageSummary.hasData {
+            return "Current average \(usageSummary.averageDailyText) per day. Target \(totalBudgetLabel) per day."
+        }
+
+        return "Target \(totalBudgetLabel) per day."
     }
 
-    private var currentRecommendationSignature: String {
-        [
-            feeling.rawValue,
-            reductionFocus.trimmingCharacters(in: .whitespacesAndNewlines),
-            String(Int(idealDailyMinutes)),
-            String(Int(socialMediaMinutes)),
-            String(everythingElseMinutes)
-        ].joined(separator: "|")
-    }
+    private var blockPickerFooterText: String? {
+        guard !skippedIntake else {
+            return "Pick categories first if your issue is broad, then add specific apps if needed."
+        }
 
-    private var isRecommendationStale: Bool {
-        aiRecommendationSignature != nil && aiRecommendationSignature != currentRecommendationSignature
+        guard !budgetPlan.isEmpty else {
+            return nil
+        }
+
+        let leadingRows = budgetPlan
+            .filter { $0.targetMinutes > 0 }
+            .prefix(3)
+            .map { "\($0.title) \(minutesLabel(for: $0.targetMinutes))" }
+            .joined(separator: " • ")
+
+        guard !leadingRows.isEmpty else {
+            return nil
+        }
+
+        return "Budget focus: \(leadingRows)"
     }
 
     private var stepSubtitle: String {
@@ -505,83 +770,146 @@ struct OnboardingFlowView: View {
         case .permission:
             return "Give BlockOS permission to do the job."
         case .intake:
-            return "Look at your current habits, then decide what normal should be."
+            return "See your habits, then set category budgets."
         case .configuration:
-            return "Choose the apps that should stop being available by default."
+            return "Pick blockers and a schedule."
         }
     }
 
-    private func makeProfile() -> OnboardingProfile {
-        if didSkipIntake {
-            return OnboardingProfile(skippedIntake: true)
+    private func loadCachedUsageSummary() {
+        switch SharedOnboardingUsageSummaryCache.loadStatus() {
+        case let .summary(summary):
+            usageSummaryLoadIssue = nil
+            usageSummaryTimedOut = false
+
+            guard usageSummary != summary else {
+                return
+            }
+
+            usageSummary = summary
+
+            if summary.hasData && !hasCustomizedBudgetPlan {
+                budgetPlan = CategoryBudgetDraft.makePlan(from: summary.planRows)
+            } else if !summary.hasData && !hasCustomizedBudgetPlan {
+                budgetPlan = []
+            }
+        case .appGroupUnavailable:
+            usageSummaryLoadIssue = "The shared App Group container is unavailable for this build, so the usage report cannot hand category data back to onboarding. Enable App Groups for both BlockOS and BlockOSUsageReport, then rerun."
+        case .missingData:
+            break
         }
-
-        return OnboardingProfile(
-            skippedIntake: false,
-            feeling: feeling,
-            goalPlan: ScreenTimeGoalPlan(
-                reductionFocus: reductionFocus.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "General distraction" : reductionFocus,
-                idealDailyMinutes: Int(idealDailyMinutes),
-                socialMediaMinutes: Int(socialMediaMinutes),
-                everythingElseMinutes: everythingElseMinutes
-            )
-        )
     }
 
-    private func clampBreakdown() {
-        if socialMediaMinutes > idealDailyMinutes {
-            socialMediaMinutes = idealDailyMinutes
-        }
-    }
+    private func refreshUsageSummaryAfterReportRenders() async {
+        loadCachedUsageSummary()
 
-    private func markRecommendationStale() {
-        aiRecommendationError = nil
-    }
-
-    private func refreshAIRecommendation() async {
-        guard !didSkipIntake else {
+        if usageSummary != nil || usageSummaryLoadIssue != nil {
             return
         }
 
-        isLoadingAIRecommendation = true
-        defer { isLoadingAIRecommendation = false }
+        for delay in [400_000_000, 1_000_000_000, 2_000_000_000] {
+            try? await Task.sleep(nanoseconds: UInt64(delay))
+            loadCachedUsageSummary()
 
-        do {
-            aiRecommendation = try await onboardingCoach.recommendation(
-                for: OnboardingCoachInput(
-                    feeling: feeling,
-                    reductionFocus: reductionFocus,
-                    idealDailyMinutes: Int(idealDailyMinutes),
-                    socialMediaMinutes: Int(socialMediaMinutes),
-                    everythingElseMinutes: everythingElseMinutes
-                )
-            )
-            aiRecommendationSignature = currentRecommendationSignature
-            aiRecommendationError = nil
-        } catch OnboardingCoachError.missingAPIKey {
-            aiRecommendation = nil
-            aiRecommendationSignature = nil
-            aiRecommendationError = nil
-        } catch {
-            aiRecommendationError = "OpenRouter could not return a recommendation right now. Showing the local BlockOS version instead."
+            if usageSummary != nil || usageSummaryLoadIssue != nil {
+                return
+            }
         }
+
+        usageSummaryTimedOut = true
+    }
+
+    private func reloadUsageSummary() {
+        usageSummaryTimedOut = false
+        loadCachedUsageSummary()
+        Task { await refreshUsageSummaryAfterReportRenders() }
+    }
+
+    private func applyRecommendedPlan(_ rows: [SharedOnboardingUsageSummary.PlanRow]) {
+        guard !rows.isEmpty else {
+            return
+        }
+
+        skippedIntake = false
+        hasCustomizedBudgetPlan = true
+        budgetPlan = CategoryBudgetDraft.makePlan(from: rows)
+    }
+
+    private func applyStarterPlan() {
+        skippedIntake = false
+        hasCustomizedBudgetPlan = true
+        usageSummaryTimedOut = false
+        budgetPlan = CategoryBudgetDraft.starterPlan()
+    }
+
+    private func updateBudget(at index: Int, delta: Int) {
+        guard budgetPlan.indices.contains(index) else {
+            return
+        }
+
+        hasCustomizedBudgetPlan = true
+        skippedIntake = false
+        budgetPlan[index].targetMinutes = max(0, budgetPlan[index].targetMinutes + delta)
+    }
+
+    private func makeProfile() -> OnboardingProfile {
+        let goalPlan: ScreenTimeGoalPlan? = (skippedIntake || budgetPlan.isEmpty) ? nil : {
+            let socialBudget = budgetPlan.first(where: { $0.id.lowercased().contains("social") })?.targetMinutes ?? 0
+            let categoryBudgets = budgetPlan
+                .filter { $0.targetMinutes > 0 }
+                .map { row in
+                    ScreenTimeCategoryBudget(
+                        categoryKey: row.id,
+                        displayName: row.title,
+                        minutes: row.targetMinutes
+                    )
+                }
+
+            let reductionFocus = usageSummary?.planRows
+                .max(by: { $0.currentAverageMinutes < $1.currentAverageMinutes })?
+                .title ?? categoryBudgets.first?.displayName ?? "Social media"
+
+            return ScreenTimeGoalPlan(
+                reductionFocus: reductionFocus,
+                idealDailyMinutes: totalBudgetMinutes,
+                socialMediaMinutes: socialBudget,
+                everythingElseMinutes: max(totalBudgetMinutes - socialBudget, 0),
+                categoryBudgets: categoryBudgets
+            )
+        }()
+
+        let schedule: BlockSchedule? = {
+            switch schedulePreset {
+            case .allDay:
+                return nil
+            case .custom:
+                return BlockSchedule(startHour: customStartHour, endHour: customEndHour)
+            default:
+                return schedulePreset.schedule
+            }
+        }()
+
+        return OnboardingProfile(
+            skippedIntake: skippedIntake,
+            goalPlan: goalPlan,
+            schedule: schedule
+        )
     }
 
     private func minutesLabel(for minutes: Int) -> String {
-        if minutes == 0 {
-            return "0m"
-        }
-
-        if minutes % 60 == 0 {
-            return "\(minutes / 60)h"
-        }
-
-        if minutes > 60 {
-            return "\(minutes / 60)h \(minutes % 60)m"
-        }
-
+        if minutes == 0 { return "0m" }
+        if minutes % 60 == 0 { return "\(minutes / 60)h" }
+        if minutes > 60 { return "\(minutes / 60)h \(minutes % 60)m" }
         return "\(minutes)m"
     }
+
+    private func hourLabel(_ h: Int) -> String {
+        let period = h < 12 ? "am" : "pm"
+        let display = h == 0 ? 12 : (h > 12 ? h - 12 : h)
+        return "\(display)\(period)"
+    }
+
+    // MARK: - Card builders
 
     private func spotlightCard<Content: View>(
         eyebrow: String,
@@ -644,24 +972,11 @@ struct OnboardingFlowView: View {
         .padding(.vertical, 8)
         .background(Color.primary.opacity(0.06), in: Capsule())
     }
-
-    private func breakdownMetric(title: String, value: String) -> some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(title)
-                .font(.system(size: 12, weight: .bold, design: .rounded))
-                .foregroundColor(.secondary)
-                .textCase(.uppercase)
-            Text(value)
-                .font(.system(size: 20, weight: .bold, design: .rounded))
-                .foregroundColor(.primary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(16)
-        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 18))
-    }
 }
 
-private struct UsageInsightsReportCard: View {
+// MARK: - Sub-views
+
+private struct UsageInsightsReportLoader: View {
     private let interval = DateInterval(
         start: Calendar.current.date(byAdding: .day, value: -6, to: Calendar.current.startOfDay(for: .now)) ?? Calendar.current.startOfDay(for: .now),
         end: .now
@@ -672,13 +987,181 @@ private struct UsageInsightsReportCard: View {
             .blockOSOnboarding,
             filter: DeviceActivityFilter(segment: .daily(during: interval))
         )
-        .background(Color.primary.opacity(0.03), in: RoundedRectangle(cornerRadius: 22))
-        .clipShape(RoundedRectangle(cornerRadius: 22))
+        .frame(maxWidth: .infinity, minHeight: 560, alignment: .topLeading)
+    }
+}
+
+private struct UsageInsightsInlineStatus: View {
+    let title: String
+    let message: String
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
+
+            Text(message)
+                .font(.system(size: 13, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(14)
+        .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 18))
     }
 }
 
 private extension DeviceActivityReport.Context {
     static let blockOSOnboarding = Self("BlockOS Onboarding")
+}
+
+private struct UsageInsightsStatusCard<Accessory: View>: View {
+    let title: String
+    let message: String
+    @ViewBuilder let accessory: () -> Accessory
+
+    init(
+        title: String,
+        body: String,
+        @ViewBuilder accessory: @escaping () -> Accessory
+    ) {
+        self.title = title
+        self.message = body
+        self.accessory = accessory
+    }
+
+    var bodyView: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text(title)
+                .font(.system(size: 18, weight: .bold, design: .rounded))
+
+            Text(message)
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+
+            accessory()
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(18)
+        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 20))
+    }
+
+    var body: some View {
+        bodyView
+    }
+}
+
+private struct UsageInsightsSummarySnapshot: View {
+    let summary: SharedOnboardingUsageSummary
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
+                snapshotMetric(
+                    title: "Current",
+                    value: summary.averageDailyText,
+                    caption: "\(summary.weeklyTotalText) over the last \(summary.daysTracked) days"
+                )
+
+                snapshotMetric(
+                    title: "Suggested",
+                    value: summary.recommendedDailyText,
+                    caption: "Starting daily target"
+                )
+            }
+
+            VStack(alignment: .leading, spacing: 10) {
+                Text("Category breakdown")
+                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .textCase(.uppercase)
+
+                ForEach(summary.categories, id: \.id) { category in
+                    HStack(alignment: .top, spacing: 12) {
+                        Image(systemName: category.icon)
+                            .font(.system(size: 12, weight: .bold))
+                            .frame(width: 32, height: 32)
+                            .background(categoryTint(for: category.id).opacity(0.15), in: Circle())
+                            .foregroundColor(categoryTint(for: category.id))
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text(category.title)
+                                .font(.system(size: 15, weight: .semibold, design: .rounded))
+                                .lineLimit(2)
+                                .fixedSize(horizontal: false, vertical: true)
+
+                            Text("\(category.dailyAverageText) / day now")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer(minLength: 12)
+
+                        VStack(alignment: .trailing, spacing: 4) {
+                            Text(category.recommendedText)
+                                .font(.system(size: 15, weight: .bold, design: .rounded))
+                            Text("target")
+                                .font(.system(size: 12, weight: .medium, design: .rounded))
+                                .foregroundColor(.secondary)
+                        }
+                    }
+                    .padding(14)
+                    .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 18))
+                }
+            }
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+    }
+
+    private func snapshotMetric(title: String, value: String, caption: String) -> some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text(title)
+                .font(.system(size: 12, weight: .bold, design: .rounded))
+                .foregroundColor(.secondary)
+                .textCase(.uppercase)
+
+            Text(value)
+                .font(.system(size: 28, weight: .bold, design: .rounded))
+
+            Text(caption)
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundColor(.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(16)
+        .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 22))
+    }
+
+    private func categoryTint(for id: String) -> Color {
+        let normalized = id.lowercased()
+
+        switch normalized {
+        case let value where value.contains("social"):
+            return Color(red: 0.98, green: 0.35, blue: 0.55)
+        case let value where value.contains("game"):
+            return Color(red: 0.39, green: 0.61, blue: 0.99)
+        case let value where value.contains("entertain") || value.contains("video") || value.contains("stream"):
+            return Color(red: 0.99, green: 0.67, blue: 0.21)
+        case let value where value.contains("creative") || value.contains("photo") || value.contains("design"):
+            return Color(red: 0.93, green: 0.54, blue: 0.26)
+        case let value where value.contains("educat") || value.contains("learn"):
+            return Color(red: 0.35, green: 0.73, blue: 0.41)
+        case let value where value.contains("health") || value.contains("fitness"):
+            return Color(red: 0.95, green: 0.39, blue: 0.39)
+        case let value where value.contains("read") || value.contains("book") || value.contains("information"):
+            return Color(red: 0.39, green: 0.77, blue: 0.75)
+        case let value where value.contains("product") || value.contains("finance") || value.contains("business"):
+            return Color(red: 0.49, green: 0.58, blue: 0.98)
+        case let value where value.contains("shop") || value.contains("food"):
+            return Color(red: 0.97, green: 0.54, blue: 0.28)
+        case let value where value.contains("travel") || value.contains("navigation"):
+            return Color(red: 0.38, green: 0.75, blue: 0.56)
+        default:
+            return .primary
+        }
+    }
 }
 
 private struct OnboardingPrimaryButton: View {
@@ -723,30 +1206,233 @@ private struct OnboardingSecondaryButton: View {
     }
 }
 
-private extension OnboardingFeeling {
-    var displayName: String {
-        switch self {
-        case .okay:
-            return "Mostly fine, but sloppy"
-        case .concerned:
-            return "A bit too high"
-        case .frustrated:
-            return "I keep cheating myself"
-        case .overwhelmed:
-            return "It feels out of control"
+private struct CategoryBudgetDraft {
+    let id: String
+    let title: String
+    let icon: String
+    let tint: Color
+    let currentAverageMinutes: Int
+    let currentAverageText: String
+    var targetMinutes: Int
+
+    var stepSize: Int {
+        targetMinutes < 30 ? 5 : 10
+    }
+
+    static func makePlan(from rows: [SharedOnboardingUsageSummary.PlanRow]) -> [CategoryBudgetDraft] {
+        return rows.map { row in
+            CategoryBudgetDraft(
+                id: row.id,
+                title: row.title,
+                icon: row.icon,
+                tint: tint(for: row.id),
+                currentAverageMinutes: row.currentAverageMinutes,
+                currentAverageText: row.currentAverageText,
+                targetMinutes: row.targetMinutes
+            )
         }
     }
+
+    static func starterPlan() -> [CategoryBudgetDraft] {
+        [
+            CategoryBudgetDraft(
+                id: "social",
+                title: "Social",
+                icon: "bubble.left.and.bubble.right.fill",
+                tint: tint(for: "social"),
+                currentAverageMinutes: 0,
+                currentAverageText: "Not loaded",
+                targetMinutes: 60
+            ),
+            CategoryBudgetDraft(
+                id: "entertainment",
+                title: "Entertainment",
+                icon: "tv.fill",
+                tint: tint(for: "entertainment"),
+                currentAverageMinutes: 0,
+                currentAverageText: "Not loaded",
+                targetMinutes: 30
+            ),
+            CategoryBudgetDraft(
+                id: "games",
+                title: "Games",
+                icon: "gamecontroller.fill",
+                tint: tint(for: "games"),
+                currentAverageMinutes: 0,
+                currentAverageText: "Not loaded",
+                targetMinutes: 20
+            )
+        ]
+    }
+
+    private static func tint(for id: String) -> Color {
+        let normalized = id.lowercased()
+
+        switch normalized {
+        case let value where value.contains("social"):
+            return Color(red: 0.98, green: 0.35, blue: 0.55)
+        case let value where value.contains("game"):
+            return Color(red: 0.39, green: 0.61, blue: 0.99)
+        case let value where value.contains("entertain") || value.contains("video") || value.contains("stream"):
+            return Color(red: 0.99, green: 0.67, blue: 0.21)
+        case let value where value.contains("creative") || value.contains("photo") || value.contains("design"):
+            return Color(red: 0.93, green: 0.54, blue: 0.26)
+        case let value where value.contains("educat") || value.contains("learn"):
+            return Color(red: 0.35, green: 0.73, blue: 0.41)
+        case let value where value.contains("health") || value.contains("fitness"):
+            return Color(red: 0.95, green: 0.39, blue: 0.39)
+        case let value where value.contains("read") || value.contains("book") || value.contains("information"):
+            return Color(red: 0.39, green: 0.77, blue: 0.75)
+        case let value where value.contains("product") || value.contains("finance") || value.contains("business"):
+            return Color(red: 0.49, green: 0.58, blue: 0.98)
+        case let value where value.contains("shop") || value.contains("food"):
+            return Color(red: 0.97, green: 0.54, blue: 0.28)
+        case let value where value.contains("travel") || value.contains("navigation"):
+            return Color(red: 0.38, green: 0.75, blue: 0.56)
+        default:
+            return .primary
+        }
+    }
+}
+
+private struct SharedOnboardingUsageSummary: Codable, Equatable {
+    struct AppUsage: Codable, Equatable {
+        let id: String
+        let title: String
+        let dailyAverageMinutes: Int
+        let dailyAverageText: String
+        let weeklyTotalText: String
+        let shareOfCategory: Double
+    }
+
+    struct CategoryUsage: Codable, Equatable {
+        let id: String
+        let title: String
+        let icon: String
+        let dailyAverageMinutes: Int
+        let dailyAverageText: String
+        let weeklyTotalText: String
+        let recommendedMinutes: Int
+        let recommendedText: String
+        let shareOfTotal: Double
+        let apps: [AppUsage]
+
+        private enum CodingKeys: String, CodingKey {
+            case id
+            case title
+            case icon
+            case dailyAverageMinutes
+            case dailyAverageText
+            case weeklyTotalText
+            case recommendedMinutes
+            case recommendedText
+            case shareOfTotal
+            case apps
+        }
+
+        init(
+            id: String,
+            title: String,
+            icon: String,
+            dailyAverageMinutes: Int,
+            dailyAverageText: String,
+            weeklyTotalText: String,
+            recommendedMinutes: Int,
+            recommendedText: String,
+            shareOfTotal: Double,
+            apps: [AppUsage]
+        ) {
+            self.id = id
+            self.title = title
+            self.icon = icon
+            self.dailyAverageMinutes = dailyAverageMinutes
+            self.dailyAverageText = dailyAverageText
+            self.weeklyTotalText = weeklyTotalText
+            self.recommendedMinutes = recommendedMinutes
+            self.recommendedText = recommendedText
+            self.shareOfTotal = shareOfTotal
+            self.apps = apps
+        }
+
+        init(from decoder: any Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            id = try container.decode(String.self, forKey: .id)
+            title = try container.decode(String.self, forKey: .title)
+            icon = try container.decode(String.self, forKey: .icon)
+            dailyAverageMinutes = try container.decode(Int.self, forKey: .dailyAverageMinutes)
+            dailyAverageText = try container.decode(String.self, forKey: .dailyAverageText)
+            weeklyTotalText = try container.decode(String.self, forKey: .weeklyTotalText)
+            recommendedMinutes = try container.decode(Int.self, forKey: .recommendedMinutes)
+            recommendedText = try container.decode(String.self, forKey: .recommendedText)
+            shareOfTotal = try container.decode(Double.self, forKey: .shareOfTotal)
+            apps = try container.decodeIfPresent([AppUsage].self, forKey: .apps) ?? []
+        }
+    }
+
+    struct PlanRow: Codable, Equatable {
+        let id: String
+        let title: String
+        let icon: String
+        let currentAverageMinutes: Int
+        let currentAverageText: String
+        let targetMinutes: Int
+        let targetText: String
+    }
+
+    let averageDailyMinutes: Int
+    let averageDailyText: String
+    let weeklyTotalText: String
+    let recommendedDailyMinutes: Int
+    let recommendedDailyText: String
+    let categories: [CategoryUsage]
+    let planRows: [PlanRow]
+    let hasData: Bool
+    let daysTracked: Int
+}
+
+private enum SharedOnboardingUsageSummaryCache {
+    private static let groupIdentifier = "group.pear.BlockOS"
+    private static let fileName = "onboarding-usage-summary.json"
+    private static let defaultsKey = "onboarding-usage-summary"
+
+    static func loadStatus() -> SharedOnboardingUsageSummaryCacheLoadStatus {
+        let containerURL = FileManager.default.containerURL(forSecurityApplicationGroupIdentifier: groupIdentifier)
+        let sharedDefaults = UserDefaults(suiteName: groupIdentifier)
+
+        if let containerURL {
+            let fileURL = containerURL.appendingPathComponent(fileName, conformingTo: .json)
+
+            if let data = try? Data(contentsOf: fileURL),
+               let summary = try? JSONDecoder().decode(SharedOnboardingUsageSummary.self, from: data) {
+                return .summary(summary)
+            }
+        }
+
+        if let data = sharedDefaults?.data(forKey: defaultsKey),
+           let summary = try? JSONDecoder().decode(SharedOnboardingUsageSummary.self, from: data) {
+            return .summary(summary)
+        }
+
+        if containerURL == nil && sharedDefaults == nil {
+            return .appGroupUnavailable
+        }
+
+        return .missingData
+    }
+}
+
+private enum SharedOnboardingUsageSummaryCacheLoadStatus {
+    case summary(SharedOnboardingUsageSummary)
+    case appGroupUnavailable
+    case missingData
 }
 
 private extension RestrictionAuthorizationStatus {
     var displayName: String {
         switch self {
-        case .notDetermined:
-            return "Waiting for permission"
-        case .denied:
-            return "Access denied"
-        case .approved:
-            return "Access enabled"
+        case .notDetermined: return "Waiting for permission"
+        case .denied:        return "Access denied"
+        case .approved:      return "Access enabled"
         }
     }
 }

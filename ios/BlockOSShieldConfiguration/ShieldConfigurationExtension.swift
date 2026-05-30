@@ -28,7 +28,7 @@ final class ShieldConfigurationExtension: ShieldConfigurationDataSource {
                 color: ShieldPalette.title
             ),
             subtitle: ShieldConfiguration.Label(
-                text: "BlockOS is protecting \(targetName). Return to BlockOS to wait it out, scan a QR code, or complete your unlock challenge.",
+                text: "BlockOS is protecting \(targetName). Return to BlockOS and complete your Touch Grass challenge to unlock.",
                 color: ShieldPalette.subtitle
             ),
             primaryButtonLabel: ShieldConfiguration.Label(
