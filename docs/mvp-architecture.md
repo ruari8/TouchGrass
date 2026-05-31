@@ -9,7 +9,7 @@ Ship an iOS-only MVP that turns selected apps/categories into a software Brick:
 - When selected usage reaches the limit, iOS shields those apps/categories.
 - To unblock, the user completes a real-world "Touch Grass" photo challenge.
 
-The MVP is local-only and does not include accounts, sync, subscriptions, or advanced challenge validation.
+The MVP does not include accounts, sync, or subscriptions. Touch Grass can run as local proof-of-action friction, or as optional backend-verified image validation when the challenge Worker is configured.
 
 ## Layers
 
@@ -46,7 +46,9 @@ The iOS app target under ios hosts onboarding, app/category selection, daily bud
 
 - Default unlock path.
 - Prompts the user to photograph a real-world object or place, such as grass, a hedge/tree, the outside of the front door, or a washing machine.
-- Uses camera capture as proof-of-action friction. The MVP does not perform image classification or liveness verification.
+- Without backend configuration, uses camera capture as proof-of-action friction.
+- With backend configuration, uploads the captured image to the challenge Worker and only unlocks when image validation passes.
+- Still does not claim high-assurance liveness or identity verification.
 
 ### Timer Fallback
 
@@ -73,8 +75,10 @@ The iOS app target under ios hosts onboarding, app/category selection, daily bud
 - `package/Sources/BlockOSEnforcement`: shielding abstractions and no-op development implementation.
 - `package/Sources/BlockOSAppSupport`: app-facing coordinator layer.
 - `package/Tests/BlockOSDomainTests`: package tests.
+- `backend`: Cloudflare Worker for optional Touch Grass challenge validation.
 - `docs/ideas.md`: backlog of future challenge ideas.
 - `docs/mvp-architecture.md`: architecture note.
+- `docs/challenge-validation.md`: backend setup and validation notes.
 
 ## Biggest Risks
 
@@ -82,7 +86,7 @@ The iOS app target under ios hosts onboarding, app/category selection, daily bud
 2. Reliable lifecycle restoration of an active session.
 3. Correct cleanup so shielding is always removed when a session finishes.
 4. Avoiding accidental bypass through poorly defined state transitions.
-5. Challenge validation is intentionally soft until camera, liveness, and classification behavior is designed.
+5. Challenge validation reduces random-photo bypasses but still needs stronger liveness/anti-replay design before being treated as high assurance.
 
 ## Implementation Order
 

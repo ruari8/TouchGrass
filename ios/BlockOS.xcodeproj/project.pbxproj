@@ -599,6 +599,8 @@
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_BLOCKOS_CHALLENGE_API_BASE_URL = "$(BLOCKOS_CHALLENGE_API_BASE_URL)";
+				INFOPLIST_KEY_BLOCKOS_CHALLENGE_API_TOKEN = "$(BLOCKOS_CHALLENGE_API_TOKEN)";
 				INFOPLIST_KEY_NSCameraUsageDescription = "BlockOS uses the camera so you can complete a real-world unlock challenge.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -633,6 +635,8 @@
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_BLOCKOS_CHALLENGE_API_BASE_URL = "$(BLOCKOS_CHALLENGE_API_BASE_URL)";
+				INFOPLIST_KEY_BLOCKOS_CHALLENGE_API_TOKEN = "$(BLOCKOS_CHALLENGE_API_TOKEN)";
 				INFOPLIST_KEY_NSCameraUsageDescription = "BlockOS uses the camera so you can complete a real-world unlock challenge.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;

@@ -416,9 +416,29 @@ private struct TouchGrassUnlockView: View {
     let sessionID: UUID
     @State private var isCameraPresented = false
     @State private var capturedImage: UIImage?
+    @State private var remoteAttempt: ChallengeAttemptStart?
+    @State private var statusMessage: String?
+    @State private var validationError: String?
+    @State private var isPreparingAttempt = false
+    @State private var isVerifyingPhoto = false
+    private let verificationClient = ChallengeVerificationClient()
 
     private var prompt: String {
-        TouchGrassChallenge.prompt(for: sessionID)
+        remoteAttempt?.promptText ?? LocalTouchGrassChallenge.prompt(for: sessionID)
+    }
+
+    private var shouldUseRemoteValidation: Bool {
+        verificationClient.isEnabled
+    }
+
+    private var cameraButtonTitle: String {
+        if isVerifyingPhoto { return "Verifying Photo..." }
+        if isPreparingAttempt { return "Preparing Challenge..." }
+        return capturedImage == nil ? "Open Camera" : "Retake Photo"
+    }
+
+    private var isCameraButtonDisabled: Bool {
+        isVerifyingPhoto || isPreparingAttempt || (shouldUseRemoteValidation && remoteAttempt == nil)
     }
 
     var body: some View {
@@ -440,6 +460,8 @@ private struct TouchGrassUnlockView: View {
                 }
             }
 
+            validationStatusView
+
             if let capturedImage {
                 Image(uiImage: capturedImage)
                     .resizable()
@@ -452,9 +474,11 @@ private struct TouchGrassUnlockView: View {
 
             VStack(spacing: 10) {
                 if UIImagePickerController.isSourceTypeAvailable(.camera) {
-                    ElegantButton(title: capturedImage == nil ? "Open Camera" : "Retake Photo", isPrimary: true) {
+                    ElegantButton(title: cameraButtonTitle, isPrimary: true, isDisabled: isCameraButtonDisabled) {
                         isCameraPresented = true
                     }
+                } else if shouldUseRemoteValidation {
+                    ElegantButton(title: "Camera Required", isPrimary: true, isDisabled: true) {}
                 } else {
                     ElegantButton(title: "Mark Task Complete", isPrimary: true) {
                         Task { await container.completeTouchGrassUnlock() }
@@ -478,8 +502,86 @@ private struct TouchGrassUnlockView: View {
                 return
             }
 
-            Task { await container.completeTouchGrassUnlock() }
+            Task { await completeCapturedChallenge(image) }
         }
+        .task {
+            await prepareRemoteAttemptIfNeeded()
+        }
+    }
+
+    @ViewBuilder
+    private var validationStatusView: some View {
+        if isPreparingAttempt || isVerifyingPhoto || statusMessage != nil || validationError != nil {
+            HStack(alignment: .top, spacing: 10) {
+                if isPreparingAttempt || isVerifyingPhoto {
+                    ProgressView()
+                        .controlSize(.small)
+                } else {
+                    Image(systemName: validationError == nil ? "checkmark.seal.fill" : "exclamationmark.triangle.fill")
+                        .foregroundColor(validationError == nil ? .green : .orange)
+                }
+
+                Text(validationError ?? statusMessage ?? "")
+                    .font(.system(size: 13, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Spacer(minLength: 0)
+            }
+            .padding(14)
+            .background(Color.primary.opacity(0.04), in: RoundedRectangle(cornerRadius: 16))
+        }
+    }
+
+    private func prepareRemoteAttemptIfNeeded() async {
+        guard shouldUseRemoteValidation, remoteAttempt == nil, !isPreparingAttempt else {
+            return
+        }
+
+        isPreparingAttempt = true
+        validationError = nil
+        statusMessage = "Preparing a verified challenge."
+
+        do {
+            remoteAttempt = try await verificationClient.createAttempt(sessionID: sessionID)
+            statusMessage = "Photo verification is enabled. Unlock happens only after the backend passes this prompt."
+        } catch {
+            validationError = error.localizedDescription
+            statusMessage = nil
+        }
+
+        isPreparingAttempt = false
+    }
+
+    private func completeCapturedChallenge(_ image: UIImage?) async {
+        guard let image else {
+            return
+        }
+
+        guard shouldUseRemoteValidation else {
+            await container.completeTouchGrassUnlock()
+            return
+        }
+
+        guard let remoteAttempt else {
+            validationError = "Challenge verification is not ready. Try again in a moment or use the timer fallback."
+            return
+        }
+
+        isVerifyingPhoto = true
+        validationError = nil
+        statusMessage = "Uploading and checking this photo."
+
+        do {
+            _ = try await verificationClient.verify(image: image, attempt: remoteAttempt)
+            statusMessage = "Photo passed verification. Unlocking..."
+            await container.completeTouchGrassUnlock()
+        } catch {
+            validationError = error.localizedDescription
+            statusMessage = nil
+        }
+
+        isVerifyingPhoto = false
     }
 }
 
@@ -524,7 +626,7 @@ private struct CameraCaptureView: UIViewControllerRepresentable {
     }
 }
 
-private enum TouchGrassChallenge {
+private enum LocalTouchGrassChallenge {
     private static let prompts = [
         "Take a photo of your hand touching grass.",
         "Go outside and take a photo of a tree or hedge.",
@@ -742,7 +844,7 @@ private struct ChallengeSettingsView: View {
                             .font(.system(size: 16, weight: .bold, design: .rounded))
 
                         VStack(spacing: 10) {
-                            ForEach(TouchGrassChallenge.previewPrompts, id: \.self) { prompt in
+                            ForEach(LocalTouchGrassChallenge.previewPrompts, id: \.self) { prompt in
                                 HStack(alignment: .top, spacing: 12) {
                                     Image(systemName: "checkmark.circle.fill")
                                         .foregroundColor(.green)
