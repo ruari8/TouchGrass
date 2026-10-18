@@ -103,6 +103,11 @@ struct RulesView: View {
                     } label: {
                         LabeledContent("Style", value: rules.settings.style.map(\.title) ?? "Custom")
                     }
+                    if GrassCheckSettings.isDeveloperBuild {
+                        NavigationLink("Developer Settings") {
+                            DeveloperSettingsView()
+                        }
+                    }
                 }
             }
             .navigationTitle("Rules")

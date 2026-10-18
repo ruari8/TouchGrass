@@ -1,6 +1,6 @@
 # Architecture
 
-Touch Grass is an iOS 26 app plus four Screen Time extensions, built on a local Swift package. The vocabulary is in [CONTEXT.md](../CONTEXT.md).
+Touch Grass is an iOS 26 app plus four Screen Time extensions and a controls extension, built on a local Swift package. The vocabulary is in [CONTEXT.md](../CONTEXT.md).
 
 ## Layers
 
@@ -40,11 +40,29 @@ Touch Grass is an iOS 26 app plus four Screen Time extensions, built on a local 
 | TouchGrassMonitor | Woken by DeviceActivity when a Schedule window opens or closes, or when a wake-up ends. It reconciles Locks and re-syncs the shields. |
 | TouchGrassShieldConfiguration | Draws the shield: "Locked.", which Block List the app is on, and what locked it. |
 | TouchGrassShieldAction | Its "Touch Grass" button sends a notification that opens the camera, because a shield can't open the app directly. |
+| TouchGrassControls | The Lock and Touch Grass controls for Control Center, the Lock Screen and the Action button. |
 | TouchGrassUsageReport | Draws the Budget bars on Home from today's usage. This is the only place iOS reveals usage minutes, so the numbers never reach the app. |
 
 ## Grass Check
 
-`GrassChecker` is a protocol. The default, `OnDeviceGrassChecker`, runs Apple's Vision image classifier and passes when its `grass` label scores at least 0.4. The camera is live-only. The simulator falls back to the photo library because it has no camera.
+`GrassChecker` is a protocol with three implementations:
+
+- `OnDeviceGrassChecker` runs Apple's Vision image classifier and passes when its `grass` label scores at least 0.4. App Store builds always use it.
+- `ServerGrassChecker` posts the photo to the Worker in `backend/`. See [grass-check-server.md](grass-check-server.md).
+- `CustomModelGrassChecker` runs a Create ML classifier bundled as `GrassClassifier.mlmodel`. None is bundled yet.
+
+Debug and TestFlight builds get Developer Settings, under Rules → Settings. There you can switch checkers, set the server URL and token, and tune the pass threshold. A Touch Grass in those builds shows what the checker saw.
+
+The camera is live-only. The simulator falls back to the photo library because it has no camera.
+
+## Locking from outside the app
+
+`LockIntent` and `OpenTouchGrassIntent` live in `ios/Shared`, which compiles into both the app and the controls extension.
+- They back the Control Center, Lock Screen and Action button controls, and the Siri and Shortcuts phrases.
+- Location triggers are Shortcuts automations that run `LockIntent`.
+- The intents may run in the extension's process, so `LockActions` (in TouchGrassScreenTime) writes the shared store and shields directly.
+- Opening the camera sets a flag in the App Group that the app checks when it comes to the foreground.
+- Whether a control can apply shields without opening the app is undocumented by Apple, so it needs testing on a device. The controls extension has the Family Controls entitlement for that reason.
 
 ## Debugging
 

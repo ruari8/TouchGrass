@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "touchgrass-challenge-worker",
+  "name": "touchgrass-grass-check",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-31",
   "observability": {
@@ -10,11 +10,5 @@
     "OPENAI_MODEL": "gpt-4.1-mini",
     "MAX_UPLOAD_BYTES": "5242880",
     "DEV_AUTO_PASS": "false"
-  },
-  "r2_buckets": [
-    {
-      "binding": "CHALLENGE_IMAGES",
-      "bucket_name": "touchgrass-challenge-images"
-    }
-  ]
+  }
 }

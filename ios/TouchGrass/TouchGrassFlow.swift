@@ -24,13 +24,20 @@ struct TouchGrassFlow: View {
     @Environment(\.dismiss) private var dismiss
     @State private var phase = Phase.ready
     @State private var isShowingCamera = false
-    private let checker: GrassChecker = OnDeviceGrassChecker()
+    /// What the checker saw, shown in debug and TestFlight builds to help tune the Grass Check.
+    @State private var lastLabels: [String] = []
 
     var body: some View {
         VStack(spacing: 24) {
             Spacer()
             content
             Spacer()
+            if !lastLabels.isEmpty {
+                Text(lastLabels.joined(separator: " · "))
+                    .font(.caption.monospaced())
+                    .foregroundStyle(.tertiary)
+                    .multilineTextAlignment(.center)
+            }
         }
         .padding(24)
         .fullScreenCover(isPresented: $isShowingCamera) {
@@ -115,7 +122,8 @@ struct TouchGrassFlow: View {
     private func check(_ image: UIImage) async {
         phase = .checking
         do {
-            let verdict = try await checker.check(image)
+            let verdict = try await GrassCheckSettings.checker().check(image)
+            lastLabels = GrassCheckSettings.isDeveloperBuild ? verdict.labels : []
             guard verdict.passed else {
                 phase = .failed("Make sure real grass fills most of the photo.")
                 return

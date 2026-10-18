@@ -46,6 +46,9 @@ final class AppModel {
     func refresh() {
         let now = Date()
         isScreenTimeApproved = ScreenTimeAuthorization.isApproved
+        if LockActions.takeTouchGrassRequest(), state.hasCompletedSetup {
+            isShowingTouchGrass = true
+        }
         let synced = emergencyUnlockSync.load()
         change(at: now) { state in
             state.reconcile(at: now)

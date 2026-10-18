@@ -1,3 +1,4 @@
+import StoreKit
 import SwiftUI
 import UserNotifications
 
@@ -26,7 +27,16 @@ struct TouchGrassApp: App {
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        Task { await detectTestFlight() }
         return true
+    }
+
+    /// TestFlight builds run in the sandbox App Store environment and get Developer Settings.
+    private func detectTestFlight() async {
+        guard case let .verified(transaction) = try? await AppTransaction.shared else { return }
+        if transaction.environment == .sandbox {
+            GrassCheckSettings.isDeveloperBuild = true
+        }
     }
 
     func userNotificationCenter(_ center: UNUserNotificationCenter, didReceive response: UNNotificationResponse) async {
