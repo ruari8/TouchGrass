@@ -143,7 +143,8 @@ extension AppState {
     /// 21:00–06:00) runs a temporary copy of the new window alongside the old one.
     private mutating func bridgeAddedScheduleTime(from proposed: Rules) {
         for new in proposed.schedules where new.isEnabled && new.bridgesEditOf == nil {
-            guard rules.automaticRuleCount < AppState.maximumAutomaticRules else { return }
+            // Bridges may use the one spare DeviceActivity slot above the usual cap.
+            guard rules.automaticRuleCount < AppState.maximumAutomaticRules + 1 else { return }
             guard let old = schedules.first(where: { $0.id == new.id }) else {
                 schedules.append(new)
                 continue

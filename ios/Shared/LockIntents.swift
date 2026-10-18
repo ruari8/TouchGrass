@@ -42,18 +42,33 @@ struct LockIntent: AppIntent {
     }
 
     func perform() async throws -> some IntentResult & ProvidesDialog {
-        guard let list = try LockActions.lock(blockListID: blockList?.id) else {
+        do {
+            let list = try LockActions.lock(blockListID: blockList?.id)
+            return .result(dialog: "\(list.name) is Locked. Go touch grass to get out.")
+        } catch LockActions.LockError.blockListMissing {
+            return .result(dialog: "That Block List no longer exists. Edit the Shortcut to choose another.")
+        } catch LockActions.LockError.notSetUp {
             return .result(dialog: "Set up Touch Grass first.")
         }
-        return .result(dialog: "\(list.name) is Locked. Go touch grass to get out.")
     }
 }
 
+/// Where `OpenTouchGrassIntent` takes the user. Controls can only open the app through an
+/// `OpenIntent`, which needs a destination.
+enum AppDestination: String, AppEnum {
+    case touchGrass
+
+    static let typeDisplayRepresentation: TypeDisplayRepresentation = "Destination"
+    static let caseDisplayRepresentations: [AppDestination: DisplayRepresentation] = [.touchGrass: "Touch Grass camera"]
+}
+
 /// Opens Touch Grass on the camera.
-struct OpenTouchGrassIntent: AppIntent {
+struct OpenTouchGrassIntent: OpenIntent {
     static let title: LocalizedStringResource = "Touch Grass"
     static let description = IntentDescription("Opens the camera to take a photo of grass and unlock.")
-    static let supportedModes: IntentModes = .foreground
+
+    @Parameter(title: "Destination", default: .touchGrass)
+    var target: AppDestination
 
     func perform() async throws -> some IntentResult {
         LockActions.requestTouchGrass()

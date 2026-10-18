@@ -15,7 +15,7 @@ Only debug and TestFlight builds can use it, by choosing **Server (OpenAI)** in 
 
 `passed` is only true when the model says yes with a confidence of at least 0.72. Trees, moss, houseplants, artificial turf and photos of screens are rejected.
 
-If `TOUCHGRASS_API_TOKEN` is set, requests need `Authorization: Bearer <token>`.
+Requests need `Authorization: Bearer <token>` matching `TOUCHGRASS_API_TOKEN`. Without a token set, the Worker refuses every request, unless `ALLOW_UNAUTHENTICATED=true` is set for local development.
 
 ## Run it locally
 

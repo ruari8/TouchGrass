@@ -13,10 +13,14 @@ import TouchGrassCore
 /// the monitor extension, which would otherwise wait on a file this process is holding.
 public enum Enforcement {
     /// Books the DeviceActivity work that changes shields later: the next wake-up, and one activity
-    /// per Schedule and Budget. Call after the state file is released.
-    public static func scheduleBackgroundWork(for state: AppState, at now: Date = .now) {
-        scheduleWakeup(for: state, at: now)
-        syncActivities(for: state)
+    /// per Schedule and Budget. Call after the state file is released. Bookings always use the latest
+    /// saved state under their own lock, so two processes booking in the wrong order can't restore
+    /// an older snapshot.
+    public static func scheduleBackgroundWork(using store: AppStateStore, at now: Date = .now) {
+        try? store.withLatestState(lockName: "bookings") { state in
+            scheduleWakeup(for: state, at: now)
+            syncActivities(for: state)
+        }
     }
 
     public static func applyShields(for state: AppState, at now: Date) {

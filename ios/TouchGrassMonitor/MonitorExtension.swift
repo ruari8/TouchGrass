@@ -41,8 +41,9 @@ final class MonitorExtension: DeviceActivityMonitor {
     /// slip a change in between and have its shields overwritten with stale ones. DeviceActivity
     /// bookings come after, since they can call back into this extension.
     private func update(at now: Date, _ change: (inout AppState) -> Void) {
-        guard let state = try? store.update(change, whileLocked: { Enforcement.applyShields(for: $0, at: now) }) else { return }
+        guard (try? store.update(change, whileLocked: { Enforcement.applyShields(for: $0, at: now) })) != nil else { return }
         // Waiting rule changes may have just applied, so Schedules and Budgets are re-synced too.
-        Enforcement.scheduleBackgroundWork(for: state, at: now)
+        Enforcement.scheduleBackgroundWork(using: store, at: now)
+        StateChangeSignal.post()
     }
 }

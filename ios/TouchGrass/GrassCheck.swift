@@ -53,8 +53,9 @@ enum GrassCheckMode: String, CaseIterable, Identifiable {
 enum GrassCheckSettings {
     private static let defaults = UserDefaults.standard
 
-    /// True in debug and TestFlight builds. Set at launch from the App Store transaction.
-    nonisolated(unsafe) static var isDeveloperBuild: Bool = {
+    /// True in debug and TestFlight builds. `AppModel.isDeveloperBuild` sets it at launch from the
+    /// App Store transaction; views observe the model rather than this.
+    static var isDeveloperBuild: Bool = {
         #if DEBUG
         true
         #else
@@ -77,14 +78,19 @@ enum GrassCheckSettings {
         set { defaults.set(newValue, forKey: "grassCheck.serverToken") }
     }
 
+    static let defaultThreshold = 0.4
+
+    /// The tuned threshold. Outside developer builds the default always applies, so a value set in
+    /// TestFlight doesn't follow the user into the App Store build.
     static var onDeviceThreshold: Double {
-        get { defaults.object(forKey: "grassCheck.threshold") as? Double ?? 0.4 }
+        get { defaults.object(forKey: "grassCheck.threshold") as? Double ?? defaultThreshold }
         set { defaults.set(newValue, forKey: "grassCheck.threshold") }
     }
 
     /// The checker to use for the next photo.
     static func checker() -> GrassChecker {
-        switch isDeveloperBuild ? mode : .onDevice {
+        guard isDeveloperBuild else { return OnDeviceGrassChecker(threshold: defaultThreshold) }
+        return switch mode {
         case .onDevice: OnDeviceGrassChecker(threshold: onDeviceThreshold)
         case .server: ServerGrassChecker(baseURL: serverURL.isEmpty ? nil : URL(string: serverURL), token: serverToken)
         case .customModel: CustomModelGrassChecker(threshold: onDeviceThreshold)

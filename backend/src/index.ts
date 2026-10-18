@@ -14,6 +14,8 @@ type Env = {
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
   TOUCHGRASS_API_TOKEN?: string;
+  /** Local development only: accept requests without a token. */
+  ALLOW_UNAUTHENTICATED?: string;
   DEV_AUTO_PASS?: string;
   MAX_UPLOAD_BYTES?: string;
 };
@@ -139,8 +141,10 @@ function parseJsonObject(text: string): Record<string, unknown> {
   }
 }
 
+/** Without a token, every request is refused unless local development explicitly allows it,
+ * so a deployed Worker can't spend OpenAI credit for strangers. */
 function isAuthorized(request: Request, env: Env): boolean {
-  if (!env.TOUCHGRASS_API_TOKEN) return true;
+  if (!env.TOUCHGRASS_API_TOKEN) return env.ALLOW_UNAUTHENTICATED === "true";
   const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
   return bearer === env.TOUCHGRASS_API_TOKEN;
 }

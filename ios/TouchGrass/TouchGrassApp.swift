@@ -27,7 +27,11 @@ struct TouchGrassApp: App {
 final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCenterDelegate {
     func application(_ application: UIApplication, didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil) -> Bool {
         UNUserNotificationCenter.current().delegate = self
+        #if !DEBUG
+        // Debug builds already have Developer Settings, and asking for the App Store transaction
+        // there prompts for an Apple Account.
         Task { await detectTestFlight() }
+        #endif
         return true
     }
 
@@ -35,7 +39,7 @@ final class AppDelegate: NSObject, UIApplicationDelegate, UNUserNotificationCent
     private func detectTestFlight() async {
         guard case let .verified(transaction) = try? await AppTransaction.shared else { return }
         if transaction.environment == .sandbox {
-            GrassCheckSettings.isDeveloperBuild = true
+            await MainActor.run { AppModel.shared.isDeveloperBuild = true }
         }
     }
 

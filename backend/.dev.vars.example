@@ -1,5 +1,7 @@
 OPENAI_API_KEY=sk-your-openai-api-key
 OPENAI_MODEL=gpt-4.1-mini
 TOUCHGRASS_API_TOKEN=replace-with-a-long-random-token
+# Or leave the token empty and allow tokenless requests locally. Never set this in production.
+ALLOW_UNAUTHENTICATED=false
 DEV_AUTO_PASS=false
 MAX_UPLOAD_BYTES=5242880

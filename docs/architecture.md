@@ -16,7 +16,7 @@ Touch Grass is an iOS 26 app plus four Screen Time extensions and a controls ext
 - `AppStateStore` saves the state as JSON in the App Group. Every change re-reads the file under a file coordinator, because the app and the extensions write to it from separate processes.
 
 **TouchGrassScreenTime** (`package/Sources/TouchGrassScreenTime`) bridges to Apple's Screen Time frameworks.
-- `Enforcement.applyShields` turns the state into shields on one named `ManagedSettingsStore`, while the state file is held. `scheduleBackgroundWork` runs after the file is released. It books a DeviceActivity wake-up for the next time the shields change on their own, such as a Break or a timed Lock ending, and syncs the Schedule and Budget activities. Stopping an activity can call back into the monitor, which would otherwise wait on the held file.
+- `Enforcement.applyShields` turns the state into shields on one named `ManagedSettingsStore`, while the state file is held. `scheduleBackgroundWork` runs after the file is released. It books a DeviceActivity wake-up for the next time the shields change on their own, such as a Break or a timed Lock ending, and syncs the Schedule and Budget activities. Stopping an activity can call back into the monitor, which would otherwise wait on the held file. Bookings run under their own lock file and re-read the latest saved state, so two processes booking out of order can't restore an older snapshot.
 - `Enforcement.syncActivities` registers one repeating DeviceActivity per enabled Schedule. It leaves matching activities alone, because restarting one inside its window makes iOS call `intervalDidStart` again and would loop.
 - A Block List's `FamilyActivitySelection` is stored inside it as encoded data that Core never opens. The Screen Time layer answers whether an edited list still covers the old one.
 - Each enabled Budget gets a repeating DeviceActivity from Reset Time to Reset Time. Its one event fires when the Block List's apps reach the Budget's minutes.
@@ -61,7 +61,8 @@ The camera is live-only. The simulator falls back to the photo library because i
 - They back the Control Center, Lock Screen and Action button controls, and the Siri and Shortcuts phrases.
 - Location triggers are Shortcuts automations that run `LockIntent`.
 - The intents may run in the extension's process, so `LockActions` (in TouchGrassScreenTime) writes the shared store and shields directly.
-- Opening the camera sets a flag in the App Group that the app checks when it comes to the foreground.
+- `OpenTouchGrassIntent` is an `OpenIntent`, because that's the only way a control can bring the app forward. It sets a flag in the App Group that the app checks when it comes to the foreground.
+- After changing the state, controls, Shortcuts and the monitor post a Darwin notification (`StateChangeSignal`), so an open app reloads instead of showing stale Locks.
 - Whether a control can apply shields without opening the app is undocumented by Apple, so it needs testing on a device. The controls extension has the Family Controls entitlement for that reason.
 
 ## Debugging

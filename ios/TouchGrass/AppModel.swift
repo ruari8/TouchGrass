@@ -15,6 +15,10 @@ final class AppModel {
     var isShowingTouchGrass = false
     /// Explains a change that didn't apply straight away, or couldn't be saved.
     var notice: String?
+    /// Debug and TestFlight builds, which get Developer Settings.
+    var isDeveloperBuild = GrassCheckSettings.isDeveloperBuild {
+        didSet { GrassCheckSettings.isDeveloperBuild = isDeveloperBuild }
+    }
 
     @ObservationIgnored private let store: AppStateStore
     @ObservationIgnored private let emergencyUnlockSync = EmergencyUnlockSync()
@@ -25,6 +29,9 @@ final class AppModel {
         #if DEBUG
         DemoState.apply(to: store)
         #endif
+        StateChangeSignal.observe {
+            MainActor.assumeIsolated { AppModel.shared.reload() }
+        }
         do {
             self.state = try store.load()
         } catch {
@@ -53,6 +60,17 @@ final class AppModel {
         change(at: now) { state in
             state.reconcile(at: now)
             state.emergencyUnlocks = state.emergencyUnlocks.merged(with: synced)
+        }
+    }
+
+    /// Picks up changes another process made, without writing anything back.
+    func reload() {
+        if let saved = try? store.load() {
+            state = saved
+            scheduleRefresh(after: .now)
+        }
+        if LockActions.takeTouchGrassRequest(), state.hasCompletedSetup {
+            isShowingTouchGrass = true
         }
     }
 
@@ -152,7 +170,7 @@ final class AppModel {
     private func change(at now: Date = .now, _ body: (inout AppState) throws -> Void) -> Bool {
         do {
             state = try store.update(body) { Enforcement.applyShields(for: $0, at: now) }
-            Enforcement.scheduleBackgroundWork(for: state, at: now)
+            Enforcement.scheduleBackgroundWork(using: store, at: now)
             scheduleRefresh(after: now)
             return true
         } catch EmergencyUnlockError.noneLeft {
