@@ -32,10 +32,21 @@ public enum Enforcement {
 
     /// iOS only runs our code in the background through DeviceActivity, so a Break ending or a
     /// timed Lock ending is booked as a one-off activity whose end wakes the monitor extension.
+    /// iOS delivers that callback when it gets round to it, so a Break can run slightly long.
+    ///
+    /// Stopping a running activity also calls `intervalDidEnd`, so the booking is left alone when it
+    /// already matches, and `wakeupIsDue` lets the monitor tell a real expiry from a cancellation.
     static func scheduleWakeup(for state: AppState, at now: Date) {
         let center = DeviceActivityCenter()
+        let next = state.nextEnforcementChange(after: now)
+        let booked = bookedWakeup
+        if let next, let booked, abs(next.timeIntervalSince(booked)) < 1, center.activities.contains(.wakeup) {
+            return
+        }
+
+        bookedWakeup = next
         center.stopMonitoring([.wakeup])
-        guard let next = state.nextEnforcementChange(after: now) else { return }
+        guard let next else { return }
 
         // DeviceActivity rejects intervals shorter than 15 minutes, so a close wake-up starts in the past.
         let start = min(now, next.addingTimeInterval(-minimumInterval))
@@ -46,7 +57,31 @@ public enum Enforcement {
             intervalEnd: calendar.dateComponents(components, from: next),
             repeats: false
         )
-        try? center.startMonitoring(.wakeup, during: schedule)
+        do {
+            try center.startMonitoring(.wakeup, during: schedule)
+        } catch {
+            bookedWakeup = nil
+        }
+    }
+
+    /// The wake-up that just ended was the booked one reaching its time, not a cancellation.
+    public static func wakeupIsDue(at now: Date) -> Bool {
+        guard let booked = bookedWakeup else { return false }
+        return now >= booked.addingTimeInterval(-60)
+    }
+
+    private static var bookedWakeup: Date? {
+        get {
+            let value = AppGroup.defaults.double(forKey: "wakeup.bookedFor")
+            return value > 0 ? Date(timeIntervalSince1970: value) : nil
+        }
+        set {
+            if let newValue {
+                AppGroup.defaults.set(newValue.timeIntervalSince1970, forKey: "wakeup.bookedFor")
+            } else {
+                AppGroup.defaults.removeObject(forKey: "wakeup.bookedFor")
+            }
+        }
     }
 
     static let minimumInterval: TimeInterval = 15 * 60

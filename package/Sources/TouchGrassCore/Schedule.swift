@@ -47,15 +47,25 @@ public struct Schedule: Codable, Hashable, Identifiable, Sendable {
         // A window that crosses midnight may have started yesterday.
         for dayOffset in [0, -1] {
             guard let day = calendar.date(byAdding: .day, value: dayOffset, to: today),
-                  weekdays.contains(calendar.component(.weekday, from: day)),
-                  let windowStart = calendar.date(bySettingHour: start.hour, minute: start.minute, second: 0, of: day),
-                  let windowEnd = calendar.date(byAdding: .minute, value: durationMinutes, to: windowStart)
+                  let window = window(startingOn: day, calendar: calendar)
             else { continue }
-            if windowStart <= date, date < windowEnd {
-                return DateInterval(start: windowStart, end: windowEnd)
+            if window.contains(date), date < window.end {
+                return window
             }
         }
         return nil
+    }
+
+    /// The window starting on `day`, if the Schedule runs that weekday. The end is built from the
+    /// local clock time, so a clock change overnight doesn't move it.
+    private func window(startingOn day: Date, calendar: Calendar) -> DateInterval? {
+        guard weekdays.contains(calendar.component(.weekday, from: day)),
+              let endDay = calendar.date(byAdding: .day, value: crossesMidnight ? 1 : 0, to: day),
+              let windowStart = calendar.date(bySettingHour: start.hour, minute: start.minute, second: 0, of: day),
+              let windowEnd = calendar.date(bySettingHour: end.hour, minute: end.minute, second: 0, of: endDay),
+              windowStart < windowEnd
+        else { return nil }
+        return DateInterval(start: windowStart, end: windowEnd)
     }
 
     /// The start of the next window after `date`, looking up to a week ahead.
@@ -73,13 +83,25 @@ public struct Schedule: Codable, Hashable, Identifiable, Sendable {
         return nil
     }
 
-    /// Every minute of `other`'s windows is also inside this Schedule's windows.
+    /// Every minute of `other`'s windows is also inside this Schedule's windows, across the whole week.
     public func covers(_ other: Schedule) -> Bool {
-        guard other.isEnabled else { return true }
-        guard isEnabled, other.weekdays.isSubset(of: weekdays) else { return false }
-        // Compare as minute ranges from this Schedule's start, so windows past midnight line up.
-        let offset = (other.start.minutesSinceMidnight - start.minutesSinceMidnight + 24 * 60) % (24 * 60)
-        return offset + other.durationMinutes <= durationMinutes
+        guard other.isEnabled, !other.weekdays.isEmpty else { return true }
+        guard isEnabled else { return false }
+        let mine = minutesOfWeek
+        return other.minutesOfWeek.isSubset(of: mine)
+    }
+
+    /// Each window as minutes from the start of Sunday, wrapping Saturday night into Sunday morning.
+    private var minutesOfWeek: Set<Int> {
+        let week = 7 * 24 * 60
+        var minutes = Set<Int>()
+        for weekday in weekdays {
+            let first = (weekday - 1) * 24 * 60 + start.minutesSinceMidnight
+            for minute in first..<(first + durationMinutes) {
+                minutes.insert(minute % week)
+            }
+        }
+        return minutes
     }
 }
 

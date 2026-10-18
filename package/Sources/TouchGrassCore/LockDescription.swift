@@ -8,8 +8,8 @@ extension AppState {
             "a Manual Lock"
         case let .schedule(id):
             schedule(id: id).map { "your \($0.name) Schedule" } ?? "a Schedule"
-        case .budget:
-            "a Budget running out"
+        case let .budget(id):
+            budget(id: id).map { "your \($0.name) Budget running out" } ?? "a Budget running out"
         }
     }
 }
@@ -22,8 +22,8 @@ extension AppState {
             "Manual Lock"
         case let .schedule(id):
             schedule(id: id)?.name ?? "Schedule"
-        case .budget:
-            "Budget"
+        case let .budget(id):
+            budget(id: id).map { "\($0.name) Budget" } ?? "Budget"
         }
     }
 }

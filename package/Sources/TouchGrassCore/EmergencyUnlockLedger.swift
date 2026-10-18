@@ -12,8 +12,9 @@ public struct EmergencyUnlockLedger: Codable, Hashable, Sendable {
         self.usedAt = usedAt.sorted()
     }
 
+    /// Uses merged from several devices can outnumber the maximum, so this never drops below zero.
     public func available(at now: Date) -> Int {
-        Self.maximum - outstanding(at: now).count
+        max(0, Self.maximum - outstanding(at: now).count)
     }
 
     /// When the next used Emergency Unlock comes back, if any are refilling.

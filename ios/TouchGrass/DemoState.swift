@@ -16,12 +16,13 @@ enum DemoState {
         guard let index = arguments.firstIndex(of: "-demo"), arguments.indices.contains(index + 1) else { return }
         let scenario = arguments[index + 1]
         let now = Date()
-        store.update { state in
+        _ = try? store.update { state in
             let social = BlockList(name: "Social", itemCount: 6)
             let everything = BlockList(name: "Everything", itemCount: 14)
             let bedtime = Schedule(name: "Bedtime", blockListID: everything.id, start: TimeOfDay(hour: 22), end: TimeOfDay(hour: 7))
             let mornings = Schedule(name: "Mornings", blockListID: social.id, start: TimeOfDay(hour: 7), end: TimeOfDay(hour: 9), weekdays: [2, 3, 4, 5, 6])
-            state = AppState(hasCompletedSetup: true, blockLists: [social, everything], schedules: [bedtime, mornings], grassCount: 12)
+            let budget = Budget(name: "Social", blockListID: social.id, minutes: 60)
+            state = AppState(hasCompletedSetup: true, blockLists: [social, everything], schedules: [bedtime, mornings], budgets: [budget], grassCount: 12)
             state.settings.defaultBlockListID = social.id
             try? state.emergencyUnlocks.use(at: now.addingTimeInterval(-12 * 24 * 60 * 60))
             switch scenario {

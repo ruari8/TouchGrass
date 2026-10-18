@@ -13,8 +13,8 @@ final class AppModel {
     private(set) var isScreenTimeApproved = ScreenTimeAuthorization.isApproved
     /// Set when a notification from the shield asks to open the camera.
     var isShowingTouchGrass = false
-    /// Explains a rule change that didn't apply straight away.
-    var ruleChangeNotice: String?
+    /// Explains a change that didn't apply straight away, or couldn't be saved.
+    var notice: String?
 
     @ObservationIgnored private let store: AppStateStore
     @ObservationIgnored private let emergencyUnlockSync = EmergencyUnlockSync()
@@ -25,7 +25,12 @@ final class AppModel {
         #if DEBUG
         DemoState.apply(to: store)
         #endif
-        self.state = store.load()
+        do {
+            self.state = try store.load()
+        } catch {
+            self.state = AppState()
+            self.notice = "Touch Grass couldn't read its saved settings. Restart the app; if it keeps happening, reinstall it."
+        }
     }
 
     // MARK: Status
@@ -55,11 +60,12 @@ final class AppModel {
 
     // MARK: Setup
 
-    func completeSetup(blockList: BlockList, style: Style, bedtime: Schedule?) {
+    func completeSetup(blockList: BlockList, style: Style, bedtime: Schedule?, budget: Budget?) {
         let now = Date()
         change(at: now) { state in
             state.blockLists = [blockList]
             state.schedules = bedtime.map { [$0] } ?? []
+            state.budgets = budget.map { [$0] } ?? []
             state.settings = .preset(style)
             state.settings.defaultBlockListID = blockList.id
             state.hasCompletedSetup = true
@@ -83,14 +89,17 @@ final class AppModel {
         change(at: now) { $0.touchGrass(at: now) }
     }
 
-    func useEmergencyUnlock() throws(EmergencyUnlockError) {
+    /// Only records the use in iCloud once it's saved locally, so a failed save doesn't spend one.
+    func useEmergencyUnlock() {
         let now = Date()
-        state = try store.update { state throws(EmergencyUnlockError) in
-            state.emergencyUnlocks = state.emergencyUnlocks.merged(with: emergencyUnlockSync.load())
+        let synced = emergencyUnlockSync.load()
+        let saved = change(at: now) { state in
+            state.emergencyUnlocks = state.emergencyUnlocks.merged(with: synced)
             try state.useEmergencyUnlock(at: now)
         }
-        emergencyUnlockSync.save(state.emergencyUnlocks)
-        enforce(at: now)
+        if saved {
+            emergencyUnlockSync.save(state.emergencyUnlocks, at: now)
+        }
     }
 
     // MARK: Rules
@@ -104,31 +113,50 @@ final class AppModel {
             outcome = state.changeRules(at: now, listCovers: { new, old in new.covers(old) }, body)
             state.reconcile(at: now)
         }
-        switch outcome {
-        case .applied:
-            ruleChangeNotice = nil
-        case let .waitingUntil(date):
-            ruleChangeNotice = "That loosens your rules, so it takes effect at \(date.formatted(date: .omitted, time: .shortened))."
-        case .refusedWhileLocked:
-            ruleChangeNotice = "Rules are frozen while you're Locked."
-        }
+        show(outcome)
     }
 
     func cancelPendingRules() {
-        change { $0.cancelPendingRules() }
+        let now = Date()
+        var outcome = RuleChangeOutcome.applied
+        change(at: now) { outcome = $0.cancelPendingRules(at: now) }
+        show(outcome)
     }
 
     // MARK: Private
 
-    private func change(at now: Date = .now, _ body: (inout AppState) -> Void) {
-        state = store.update(body)
-        enforce(at: now)
+    private func show(_ outcome: RuleChangeOutcome) {
+        switch outcome {
+        case .applied:
+            break
+        case let .waitingUntil(date):
+            notice = "That loosens your rules, so it takes effect at \(date.formatted(date: .omitted, time: .shortened))."
+        case .refusedWhileLocked:
+            notice = "Rules are frozen while you're Locked."
+        }
     }
 
-    private func enforce(at now: Date) {
-        Enforcement.sync(state, at: now)
-        Enforcement.syncActivities(for: state)
-        scheduleRefresh(after: now)
+    /// Saves a change and applies its shields while still holding the state file, so the monitor
+    /// extension can't interleave a change and overwrite these shields with stale ones.
+    /// Returns false, and shows why, if nothing was saved.
+    @discardableResult
+    private func change(at now: Date = .now, _ body: (inout AppState) throws -> Void) -> Bool {
+        do {
+            state = try store.update(body) { state in
+                Enforcement.sync(state, at: now)
+                Enforcement.syncActivities(for: state)
+            }
+            scheduleRefresh(after: now)
+            return true
+        } catch EmergencyUnlockError.noneLeft {
+            notice = "You have no Emergency Unlocks left."
+        } catch {
+            notice = "That couldn't be saved. Try again."
+        }
+        if let saved = try? store.load() {
+            state = saved
+        }
+        return false
     }
 
     /// Wakes the app when a Break or timed Lock ends while it's open, so the screen stays current.

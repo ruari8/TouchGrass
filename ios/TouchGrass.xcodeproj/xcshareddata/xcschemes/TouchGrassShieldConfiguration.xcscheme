@@ -57,11 +57,16 @@
       debugServiceExtension = "internal"
       allowLocationSimulation = "YES"
       launchAutomaticallySubstyle = "2">
-      <RemoteRunnable
-         runnableDebuggingMode = "0"
-         BundleIdentifier = "com.bigwedge.golf.app"
-         RemotePath = "/var/containers/Bundle/Application/1C4FF2F1-9EA9-4D4F-A1F3-4755BEE80111/Wedge.app">
-      </RemoteRunnable>
+      <BuildableProductRunnable
+         runnableDebuggingMode = "0">
+         <BuildableReference
+            BuildableIdentifier = "primary"
+            BlueprintIdentifier = "A684495C2F6418D500C85C75"
+            BuildableName = "TouchGrass.app"
+            BlueprintName = "TouchGrass"
+            ReferencedContainer = "container:TouchGrass.xcodeproj">
+         </BuildableReference>
+      </BuildableProductRunnable>
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"

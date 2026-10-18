@@ -19,6 +19,22 @@ jobs:
         working-directory: package
         run: swift test
 
+  ios-app:
+    name: iOS app
+    runs-on: macos-26
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Build for the simulator
+        run: >
+          xcodebuild build
+          -project ios/TouchGrass.xcodeproj
+          -scheme TouchGrass
+          -destination 'generic/platform=iOS Simulator'
+          CODE_SIGNING_ALLOWED=NO
+
   backend:
     name: Backend
     runs-on: ubuntu-latest

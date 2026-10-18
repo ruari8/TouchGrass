@@ -23,6 +23,7 @@ struct RulesView: View {
                         Button("Cancel waiting changes", role: .destructive) {
                             model.cancelPendingRules()
                         }
+                        .disabled(frozen)
                     }
                 }
 
@@ -66,6 +67,36 @@ struct RulesView: View {
                     Text("A Schedule locks its Block List during its window on the days you choose.")
                 }
 
+                Section {
+                    ForEach(rules.budgets) { budget in
+                        NavigationLink {
+                            BudgetEditor(budget: budget, defaultBlockListID: budget.blockListID)
+                        } label: {
+                            LabeledContent {
+                                Text(Budget.format(budget.minutes))
+                            } label: {
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(budget.name)
+                                        .foregroundStyle(budget.isEnabled ? .primary : .secondary)
+                                    Text(rules.blockLists.first { $0.id == budget.blockListID }?.name ?? "")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                    if let defaultList = rules.blockLists.first {
+                        NavigationLink("New Budget") {
+                            BudgetEditor(budget: nil, defaultBlockListID: rules.settings.defaultBlockListID ?? defaultList.id)
+                        }
+                        .disabled(frozen || rules.automaticRuleCount >= AppState.maximumAutomaticRules)
+                    }
+                } header: {
+                    Text("Budgets")
+                } footer: {
+                    Text("A Budget locks its Block List once you've used it for so many minutes a day.")
+                }
+
                 Section("Settings") {
                     NavigationLink {
                         SettingsView()
@@ -77,10 +108,6 @@ struct RulesView: View {
             .navigationTitle("Rules")
         }
     }
-}
-
-extension Rules {
-    var automaticRuleCount: Int { schedules.count }
 }
 
 struct SettingsView: View {
@@ -124,6 +151,19 @@ struct SettingsView: View {
                     }
                 }
                 Toggle("Loosening waits until tomorrow", isOn: binding(\.looseningWaitsUntilTomorrow))
+            }
+
+            Section {
+                DatePicker("Reset Time", selection: Binding(
+                    get: { settings.resetTime.date },
+                    set: { date in
+                        var time = TimeOfDay.midnight
+                        time.date = date
+                        model.changeRules { $0.settings.resetTime = time }
+                    }
+                ), displayedComponents: .hourAndMinute)
+            } footer: {
+                Text("When Budgets refill and waiting changes apply. Night owls might pick 4:00.")
             }
 
             Section {

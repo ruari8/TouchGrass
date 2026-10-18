@@ -128,6 +128,16 @@ private func makeState(_ style: Style = .strict) -> (AppState, social: UUID, eve
         #expect(ledger.available(at: minutes(thirtyDays + 2)) == 3)
     }
 
+    @Test func mergedUsesNeverGoBelowZero() throws {
+        var a = EmergencyUnlockLedger()
+        var b = EmergencyUnlockLedger()
+        for minute in 0..<3 {
+            try a.use(at: minutes(Double(minute)))
+            try b.use(at: minutes(Double(minute) + 0.5))
+        }
+        #expect(a.merged(with: b).available(at: minutes(5)) == 0)
+    }
+
     @Test func mergingKeepsUsesFromBothSources() throws {
         var a = EmergencyUnlockLedger()
         var b = EmergencyUnlockLedger()
@@ -165,17 +175,28 @@ private func makeState(_ style: Style = .strict) -> (AppState, social: UUID, eve
     @Test func updatePersistsAndFailedUpdateSavesNothing() throws {
         let url = FileManager.default.temporaryDirectory.appending(path: "\(UUID()).json")
         let store = AppStateStore(fileURL: url)
-        store.update { $0.grassCount = 4 }
-        #expect(store.load().grassCount == 4)
+        try store.update { $0.grassCount = 4 }
+        #expect(try store.load().grassCount == 4)
 
         struct Failure: Error {}
+        var ranWhileLocked = false
         #expect(throws: Failure.self) {
-            try store.update { state throws(Failure) in
+            try store.update({ state in
                 state.grassCount = 99
                 throw Failure()
-            }
+            }, whileLocked: { _ in ranWhileLocked = true })
         }
-        #expect(store.load().grassCount == 4)
+        #expect(try store.load().grassCount == 4)
+        #expect(!ranWhileLocked)
+    }
+
+    @Test func corruptFileIsAnErrorNotAFreshState() throws {
+        let url = FileManager.default.temporaryDirectory.appending(path: "\(UUID()).json")
+        try Data("not json".utf8).write(to: url)
+        let store = AppStateStore(fileURL: url)
+        #expect(throws: AppStateStore.StoreError.self) { try store.load() }
+        #expect(throws: AppStateStore.StoreError.self) { try store.update { $0.grassCount = 1 } }
+        #expect(try Data(contentsOf: url) == Data("not json".utf8))
     }
 
     @Test func missingFieldsDecodeToDefaults() throws {

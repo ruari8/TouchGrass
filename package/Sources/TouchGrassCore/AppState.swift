@@ -5,6 +5,7 @@ public struct AppState: Codable, Hashable, Sendable {
     public var hasCompletedSetup: Bool
     public var blockLists: [BlockList]
     public var schedules: [Schedule]
+    public var budgets: [Budget]
     public var settings: Settings
     /// Loosening changes waiting for the next Reset Time.
     public var pendingRules: PendingRules?
@@ -17,6 +18,7 @@ public struct AppState: Codable, Hashable, Sendable {
         hasCompletedSetup: Bool = false,
         blockLists: [BlockList] = [],
         schedules: [Schedule] = [],
+        budgets: [Budget] = [],
         settings: Settings = .preset(.strict),
         pendingRules: PendingRules? = nil,
         locks: [Lock] = [],
@@ -26,6 +28,7 @@ public struct AppState: Codable, Hashable, Sendable {
         self.hasCompletedSetup = hasCompletedSetup
         self.blockLists = blockLists
         self.schedules = schedules
+        self.budgets = budgets
         self.settings = settings
         self.pendingRules = pendingRules
         self.locks = locks
@@ -39,6 +42,7 @@ public struct AppState: Codable, Hashable, Sendable {
         hasCompletedSetup = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedSetup) ?? defaults.hasCompletedSetup
         blockLists = try container.decodeIfPresent([BlockList].self, forKey: .blockLists) ?? defaults.blockLists
         schedules = try container.decodeIfPresent([Schedule].self, forKey: .schedules) ?? defaults.schedules
+        budgets = try container.decodeIfPresent([Budget].self, forKey: .budgets) ?? defaults.budgets
         settings = try container.decodeIfPresent(Settings.self, forKey: .settings) ?? defaults.settings
         pendingRules = try container.decodeIfPresent(PendingRules.self, forKey: .pendingRules)
         locks = try container.decodeIfPresent([Lock].self, forKey: .locks) ?? defaults.locks

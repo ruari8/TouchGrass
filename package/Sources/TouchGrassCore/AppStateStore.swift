@@ -1,8 +1,10 @@
 import Foundation
 
 /// Reads and writes `AppState` as JSON in the App Group.
-/// The app and its extensions run in separate processes, so every change goes through `update`,
-/// which re-reads the file under a file coordinator before writing.
+///
+/// The app and its extensions run in separate processes. Every change goes through `update`,
+/// which re-reads the file under a file coordinator, writes it, and runs `whileLocked` before
+/// letting go, so applying shields for a state can't interleave with another process's change.
 public final class AppStateStore: Sendable {
     public let fileURL: URL
 
@@ -10,36 +12,41 @@ public final class AppStateStore: Sendable {
         self.fileURL = fileURL
     }
 
-    public func load() -> AppState {
-        var state = AppState()
-        coordinate(writing: false) { url in
-            state = Self.read(url)
-        }
-        return state
+    public enum StoreError: Error {
+        case coordination(Error)
+        case unreadable(Error)
+        case unwritable(Error)
     }
 
-    /// Applies a change to the latest saved state and saves it. If the change throws, nothing is saved.
+    public func load() throws -> AppState {
+        var result: Result<AppState, Error> = .success(AppState())
+        try coordinate(writing: false) { url in
+            result = Result { try Self.read(url) }
+        }
+        return try result.get()
+    }
+
+    /// Applies a change to the latest saved state and saves it. If anything throws, nothing is saved
+    /// and `whileLocked` doesn't run.
     @discardableResult
-    public func update<E: Error>(_ change: (inout AppState) throws(E) -> Void) throws(E) -> AppState {
-        var result = AppState()
-        var thrown: E?
-        coordinate(writing: true) { url in
-            var state = Self.read(url)
-            result = state
-            do throws(E) {
+    public func update(
+        _ change: (inout AppState) throws -> Void,
+        whileLocked: (AppState) -> Void = { _ in }
+    ) throws -> AppState {
+        var result: Result<AppState, Error> = .success(AppState())
+        try coordinate(writing: true) { url in
+            result = Result {
+                var state = try Self.read(url)
                 try change(&state)
-            } catch {
-                thrown = error
-                return
+                try Self.write(state, to: url)
+                whileLocked(state)
+                return state
             }
-            try? Self.write(state, to: url)
-            result = state
         }
-        if let thrown { throw thrown }
-        return result
+        return try result.get()
     }
 
-    private func coordinate(writing: Bool, _ body: (URL) -> Void) {
+    private func coordinate(writing: Bool, _ body: (URL) -> Void) throws {
         let coordinator = NSFileCoordinator()
         var error: NSError?
         if writing {
@@ -47,17 +54,28 @@ public final class AppStateStore: Sendable {
         } else {
             coordinator.coordinate(readingItemAt: fileURL, options: [], error: &error, byAccessor: body)
         }
+        if let error { throw StoreError.coordination(error) }
     }
 
-    private static func read(_ url: URL) -> AppState {
-        guard let data = try? Data(contentsOf: url) else { return AppState() }
-        return (try? JSONDecoder().decode(AppState.self, from: data)) ?? AppState()
+    /// A missing file is a fresh install. A file that exists but can't be decoded is an error,
+    /// so a later write doesn't silently replace it with an empty state.
+    private static func read(_ url: URL) throws -> AppState {
+        guard FileManager.default.fileExists(atPath: url.path) else { return AppState() }
+        do {
+            return try JSONDecoder().decode(AppState.self, from: Data(contentsOf: url))
+        } catch {
+            throw StoreError.unreadable(error)
+        }
     }
 
     private static func write(_ state: AppState, to url: URL) throws {
-        try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys]
-        try encoder.encode(state).write(to: url, options: .atomic)
+        do {
+            try FileManager.default.createDirectory(at: url.deletingLastPathComponent(), withIntermediateDirectories: true)
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.sortedKeys]
+            try encoder.encode(state).write(to: url, options: .atomic)
+        } catch {
+            throw StoreError.unwritable(error)
+        }
     }
 }

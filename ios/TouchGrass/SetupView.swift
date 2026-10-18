@@ -17,6 +17,8 @@ struct SetupView: View {
     @State private var wantsBedtime = true
     @State private var bedtimeStart = TimeOfDay(hour: 22)
     @State private var bedtimeEnd = TimeOfDay(hour: 7)
+    @State private var wantsBudget = false
+    @State private var budgetMinutes = 60
     @State private var isPicking = false
     @State private var isPracticing = false
 
@@ -75,15 +77,23 @@ struct SetupView: View {
                 .buttonStyle(.primary)
 
         case .bedtime:
-            StepHeader(symbol: "moon.fill", title: "A bedtime Schedule?", detail: "Lock \(blockList.name) every night. You can add more Schedules later.")
-            Toggle("Lock at bedtime", isOn: $wantsBedtime)
+            StepHeader(symbol: "moon.fill", title: "Any limits?", detail: "Both are optional, and you can add more Schedules and Budgets later.")
+            Toggle("Lock \(blockList.name) at bedtime", isOn: $wantsBedtime)
             if wantsBedtime {
                 DatePicker("From", selection: $bedtimeStart.date, displayedComponents: .hourAndMinute)
                 DatePicker("Until", selection: $bedtimeEnd.date, displayedComponents: .hourAndMinute)
             }
+            Toggle("Daily Budget for \(blockList.name)", isOn: $wantsBudget)
+            if wantsBudget {
+                Picker("Minutes a day", selection: $budgetMinutes) {
+                    ForEach(Budget.minuteOptions, id: \.self) { minutes in
+                        Text(Budget.format(minutes)).tag(minutes)
+                    }
+                }
+            }
             Button("Continue") { step = .practice }
                 .buttonStyle(.primary)
-                .disabled(wantsBedtime && bedtime.durationMinutes < 15)
+                .disabled(wantsBedtime && (bedtimeStart == bedtimeEnd || bedtime.durationMinutes < 15))
 
         case .practice:
             StepHeader(symbol: "camera.fill", title: "Try it once", detail: "Take a practice photo of grass. Touch Grass also needs to send you a notification when you tap a locked app.")
@@ -113,7 +123,12 @@ struct SetupView: View {
     }
 
     private func finish() {
-        model.completeSetup(blockList: blockList, style: style, bedtime: wantsBedtime ? bedtime : nil)
+        model.completeSetup(
+            blockList: blockList,
+            style: style,
+            bedtime: wantsBedtime ? bedtime : nil,
+            budget: wantsBudget ? Budget(name: blockList.name, blockListID: blockList.id, minutes: budgetMinutes) : nil
+        )
     }
 }
 

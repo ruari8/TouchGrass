@@ -25,8 +25,8 @@ struct RootView: View {
             TouchGrassFlow(mode: .unlock)
         }
         .alert(
-            model.ruleChangeNotice ?? "",
-            isPresented: Binding(get: { model.ruleChangeNotice != nil }, set: { if !$0 { model.ruleChangeNotice = nil } })
+            model.notice ?? "",
+            isPresented: Binding(get: { model.notice != nil }, set: { if !$0 { model.notice = nil } })
         ) {
             Button("OK", role: .cancel) {}
         }

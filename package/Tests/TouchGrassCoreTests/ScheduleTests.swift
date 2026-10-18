@@ -39,6 +39,25 @@ private func date(day: Int = 19, _ hour: Int, _ minute: Int = 0) -> Date {
         #expect(weekend.nextStart(after: date(12), calendar: calendar) == date(day: 24, 9))
     }
 
+    @Test func windowEndsAtTheClockTimeAcrossAClockChange() {
+        var london = Calendar(identifier: .gregorian)
+        london.timeZone = TimeZone(identifier: "Europe/London")!
+        let bedtime = Schedule(name: "Bedtime", blockListID: list, start: TimeOfDay(hour: 22), end: TimeOfDay(hour: 7))
+        // Clocks go back at 2am on Sunday 25 October 2026.
+        let saturdayNight = london.date(from: DateComponents(year: 2026, month: 10, day: 24, hour: 23))!
+        let window = bedtime.window(containing: saturdayNight, calendar: london)
+        #expect(window?.end == london.date(from: DateComponents(year: 2026, month: 10, day: 25, hour: 7)))
+    }
+
+    @Test func coversAccountsForTheDayAfterMidnight() {
+        // Monday 23:00 to Tuesday 01:00 doesn't cover Monday 00:00 to 01:00.
+        let late = Schedule(name: "Late", blockListID: list, start: TimeOfDay(hour: 23), end: TimeOfDay(hour: 1), weekdays: [2])
+        let early = Schedule(name: "Early", blockListID: list, start: TimeOfDay(hour: 0), end: TimeOfDay(hour: 1), weekdays: [2])
+        #expect(!late.covers(early))
+        let tuesdayEarly = Schedule(name: "Early", blockListID: list, start: TimeOfDay(hour: 0), end: TimeOfDay(hour: 1), weekdays: [3])
+        #expect(late.covers(tuesdayEarly))
+    }
+
     @Test func coversComparesWindowsAndDays() {
         let night = Schedule(name: "Night", blockListID: list, start: TimeOfDay(hour: 22), end: TimeOfDay(hour: 7))
         var shorter = night
@@ -157,6 +176,50 @@ private func date(day: Int = 19, _ hour: Int, _ minute: Int = 0) -> Date {
         let outcome = state.changeRules(at: date(12), calendar: calendar, listCovers: alwaysCovers) { $0.schedules.removeAll() }
         #expect(outcome == .refusedWhileLocked)
         #expect(state.schedules.count == 1)
+    }
+
+    @Test func pendingLooseningWaitsForActiveLocksToEnd() {
+        var state = makeState(.strict)
+        // At 9pm, delete the 10pm–7am Schedule. It waits for midnight, when Bedtime is running.
+        state.changeRules(at: date(21), calendar: calendar, listCovers: alwaysCovers) { $0.schedules.removeAll() }
+        state.reconcile(at: date(22), calendar: calendar)
+        state.reconcile(at: date(day: 20, 0), calendar: calendar)
+        #expect(state.isLocked(at: date(day: 20, 0)))
+        #expect(state.schedules.count == 1)
+
+        state.reconcile(at: date(day: 20, 7), calendar: calendar)
+        #expect(state.schedules.isEmpty)
+        #expect(!state.isLocked(at: date(day: 20, 7)))
+    }
+
+    @Test func tighteningAppliesAtOnceEvenWithLooseningWaiting() {
+        var state = makeState(.strict)
+        state.changeRules(at: date(12), calendar: calendar, listCovers: alwaysCovers) { $0.settings.breakMinutes = 60 }
+        let extra = Schedule(name: "Lunch", blockListID: social.id, start: TimeOfDay(hour: 12), end: TimeOfDay(hour: 13))
+        let outcome = state.changeRules(at: date(12, 5), calendar: calendar, listCovers: alwaysCovers) { $0.schedules.append(extra) }
+        #expect(outcome == .applied)
+        #expect(state.schedules.count == 2)
+        #expect(state.settings.breakMinutes == 15)
+        #expect(state.upcomingRules.settings.breakMinutes == 60)
+        #expect(state.upcomingRules.schedules.count == 2)
+    }
+
+    @Test func switchingTheDefaultToASmallerListIsLoosening() {
+        var state = makeState(.strict)
+        let small = BlockList(name: "Small")
+        state.changeRules(at: date(12), calendar: calendar, listCovers: alwaysCovers) { $0.blockLists.append(small) }
+        let outcome = state.changeRules(at: date(12), calendar: calendar, listCovers: { new, old in new.id == old.id }) {
+            $0.settings.defaultBlockListID = small.id
+        }
+        #expect(outcome == .waitingUntil(date(day: 20, 0)))
+    }
+
+    @Test func cancellingWaitingChangesIsFrozenWhileLocked() {
+        var state = makeState(.strict)
+        state.changeRules(at: date(12), calendar: calendar, listCovers: alwaysCovers) { $0.schedules.removeAll() }
+        state.startManualLock(blockListID: social.id, at: date(13))
+        #expect(state.cancelPendingRules(at: date(13)) == .refusedWhileLocked)
+        #expect(state.pendingRules != nil)
     }
 
     @Test func deletingABlockListRemovesItsSchedules() {

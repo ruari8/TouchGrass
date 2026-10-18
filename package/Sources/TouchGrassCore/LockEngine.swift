@@ -32,6 +32,7 @@ extension AppState {
     /// The next moment the set of blocked apps changes on its own: a Break ending, a Lock ending,
     /// or waiting rule changes applying. Schedule starts have their own DeviceActivity wake-ups.
     public func nextEnforcementChange(after now: Date) -> Date? {
+        // Waiting rule changes that are overdue apply when the last Lock ends, which is already listed.
         (locks.flatMap { [$0.pausedUntil, $0.endsAt] } + [pendingRules?.appliesAt])
             .compactMap { $0 }
             .filter { $0 > now }
@@ -41,12 +42,15 @@ extension AppState {
     /// Brings Locks in line with the clock: applies waiting rule changes, forgets ended Locks,
     /// and starts a Lock for every Schedule whose window is open. Safe to call repeatedly.
     public mutating func reconcile(at now: Date, calendar: Calendar = .current) {
-        applyPendingRules(at: now)
         pruneEndedLocks(at: now)
-        let liveSources = Set(schedules.map { LockSource.schedule($0.id) })
+        applyPendingRules(at: now)
+        // Locks whose Schedule or Budget has been deleted or switched off end with it.
+        let liveSources = Set(
+            schedules.filter(\.isEnabled).map { LockSource.schedule($0.id) }
+                + budgets.filter(\.isEnabled).map { LockSource.budget($0.id) }
+        )
         locks.removeAll { lock in
-            if case .schedule = lock.source { return !liveSources.contains(lock.source) }
-            return false
+            lock.source != .manual && !liveSources.contains(lock.source)
         }
         for schedule in schedules {
             guard let window = schedule.window(containing: now, calendar: calendar) else { continue }

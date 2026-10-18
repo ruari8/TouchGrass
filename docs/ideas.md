@@ -1,13 +1,14 @@
 # Ideas Backlog
 
-This document keeps future challenge and anti-circumvention ideas from getting lost while the MVP stays intentionally small.
+This document keeps future ideas from getting lost while the MVP stays small.
 
-## MVP Now
+## Decided
 
-- Daily selected-use limit through Screen Time / Family Controls.
-- Automatic shielding when selected app/category usage reaches the daily limit.
-- Touch Grass photo unlock: take a real-world proof photo to restore access.
-- Timer unlock: fixed 120-second fallback when camera capture is unavailable.
+The design agreed for Touch Grass lives in [CONTEXT.md](../CONTEXT.md) and [architecture.md](architecture.md). Two ideas from the old app were dropped on purpose:
+- The timer unlock fallback. Emergency Unlocks are the only way out besides touching grass.
+- Unlock challenges other than grass. Touch Grass is grass only.
+
+Everything below is a backlog of ideas, not plans.
 
 ## Physical Challenge Ideas
 

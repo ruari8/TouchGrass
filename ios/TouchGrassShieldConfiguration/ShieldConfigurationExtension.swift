@@ -45,15 +45,15 @@ final class ShieldConfigurationExtension: ShieldConfigurationDataSource {
 
     private func subtitle(name: String?, isOn: (BlockList) -> Bool) -> String {
         let target = name ?? "This app"
-        let state = AppStateStore().load()
+        let state = (try? AppStateStore().load()) ?? AppState()
         let now = Date()
         let lock = state.locks.first { lock in
             lock.isEnforced(at: now) && state.blockList(id: lock.blockListID).map(isOn) == true
         }
         guard let lock, let list = state.blockList(id: lock.blockListID) else {
-            return "\(target) is locked. Go touch grass."
+            return "\(target) is locked. Open Touch Grass and take a photo of real grass to unlock."
         }
-        return "\(target) is on your \(list.name) Block List, locked by \(state.reason(for: lock)). Go touch grass."
+        return "\(target) is on your \(list.name) Block List, locked by \(state.reason(for: lock)). Open Touch Grass and take a photo of real grass to unlock."
     }
 }
 

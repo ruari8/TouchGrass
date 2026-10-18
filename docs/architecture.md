@@ -18,12 +18,14 @@ Touch Grass is an iOS 26 app plus four Screen Time extensions, built on a local 
 - `Enforcement.sync` turns the state into shields on one named `ManagedSettingsStore`. It also books a DeviceActivity wake-up for the next time the shields change on their own, such as a Break or a timed Lock ending.
 - `Enforcement.syncActivities` registers one repeating DeviceActivity per enabled Schedule. It leaves matching activities alone, because restarting one inside its window makes iOS call `intervalDidStart` again and would loop.
 - A Block List's `FamilyActivitySelection` is stored inside it as encoded data that Core never opens. The Screen Time layer answers whether an edited list still covers the old one.
+- Each enabled Budget gets a repeating DeviceActivity from Reset Time to Reset Time. Its one event fires when the Block List's apps reach the Budget's minutes (`includesPastActivity`, so re-registering mid-day counts usage so far). On iOS 26 that event sometimes fires within seconds of registering. A callback that soon is re-registered once and only locks if it fires again straight away (see `shouldLockForBudgetThreshold`). This needs testing on a real device.
+- The wake-up booking is left alone when unchanged, because stopping a running activity also calls `intervalDidEnd`. The monitor ignores a wake-up ending before its booked time.
 - iOS allows 20 monitored activities per app. One is kept for wake-ups, which caps Schedules plus Budgets at 18.
 
 **The app** (`ios/TouchGrass`) is SwiftUI.
-- `AppModel` sends every change through the store and then re-syncs the shields.
+- `AppModel` sends every change through the store and re-syncs the shields while still holding the state file. The monitor extension does the same, so neither process can overwrite the other's shields with stale ones. A failed save is shown to the user and the saved state is reloaded.
 - Rule changes are refused while any Lock is active.
-- Emergency Unlock uses are mirrored to iCloud key-value storage, so reinstalling the app doesn't refill them.
+- Emergency Unlock uses are mirrored to iCloud key-value storage, one key per use, so reinstalling the app doesn't refill them and two offline devices don't overwrite each other.
 
 ## Extensions
 
@@ -32,7 +34,7 @@ Touch Grass is an iOS 26 app plus four Screen Time extensions, built on a local 
 | TouchGrassMonitor | Woken by DeviceActivity when a Schedule window opens or closes, or when a wake-up ends. It reconciles Locks and re-syncs the shields. |
 | TouchGrassShieldConfiguration | Draws the shield: "Locked.", which Block List the app is on, and what locked it. |
 | TouchGrassShieldAction | Its "Touch Grass" button sends a notification that opens the camera, because a shield can't open the app directly. |
-| TouchGrassUsageReport | DeviceActivityReport views. This is the only place iOS reveals usage minutes. |
+| TouchGrassUsageReport | Draws the Budget bars on Home from today's usage. This is the only place iOS reveals usage minutes, so the numbers never reach the app. |
 
 ## Grass Check
 

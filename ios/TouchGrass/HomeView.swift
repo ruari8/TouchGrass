@@ -1,3 +1,4 @@
+import DeviceActivity
 import SwiftUI
 import TouchGrassCore
 
@@ -27,7 +28,7 @@ struct HomeView: View {
             }
             .alert("Use an Emergency Unlock?", isPresented: $isConfirmingEmergencyUnlock) {
                 Button("Unlock everything", role: .destructive) {
-                    try? model.useEmergencyUnlock()
+                    model.useEmergencyUnlock()
                 }
                 Button("Cancel", role: .cancel) {}
             } message: {
@@ -166,12 +167,18 @@ enum LockDuration: CaseIterable, Identifiable {
     }
 }
 
-/// What's coming up today.
+/// Today's Budget usage and the next Schedule.
 private struct TodayView: View {
     @Environment(AppModel.self) private var model
     let now: Date
 
     var body: some View {
+        let budgetCount = model.state.budgets.filter(\.isEnabled).count
+        if budgetCount > 0 {
+            BudgetUsageReportView(day: model.state.budgetDay(containing: now))
+                .equatable()
+                .frame(height: CGFloat(budgetCount) * 46)
+        }
         if let next = model.state.nextScheduleStart(after: now) {
             Label {
                 Text("\(next.schedule.name) locks \(model.state.blockList(id: next.schedule.blockListID)?.name ?? "apps") \(next.start.formatted(.relative(presentation: .named)))")
@@ -181,6 +188,19 @@ private struct TodayView: View {
             .font(.subheadline)
             .foregroundStyle(.secondary)
         }
+    }
+}
+
+/// Budget bars drawn by the usage report extension, the only process allowed to see usage minutes.
+/// Kept in its own view so the per-second timeline doesn't rebuild the report.
+private struct BudgetUsageReportView: View, Equatable {
+    let day: DateInterval
+
+    var body: some View {
+        DeviceActivityReport(
+            DeviceActivityReport.Context("budgets"),
+            filter: DeviceActivityFilter(segment: .hourly(during: day), users: .all, devices: .init([.iPhone]))
+        )
     }
 }
 
