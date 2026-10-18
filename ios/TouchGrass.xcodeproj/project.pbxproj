@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		D50009002F70000100AAA001 /* TouchGrassScreenTime in Frameworks */ = {isa = PBXBuildFile; productRef = D40009002F70000100AAA001 /* TouchGrassScreenTime */; };
 		D50001002F70000100AAA001 /* TouchGrassCore in Frameworks */ = {isa = PBXBuildFile; productRef = D40001002F70000100AAA001 /* TouchGrassCore */; };
 		D50002002F70000100AAA001 /* TouchGrassScreenTime in Frameworks */ = {isa = PBXBuildFile; productRef = D40002002F70000100AAA001 /* TouchGrassScreenTime */; };
 		D50003002F70000100AAA001 /* TouchGrassCore in Frameworks */ = {isa = PBXBuildFile; productRef = D40003002F70000100AAA001 /* TouchGrassCore */; };
@@ -129,6 +130,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D50009002F70000100AAA001 /* TouchGrassScreenTime in Frameworks */,
 				D50005002F70000100AAA001 /* TouchGrassCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -236,6 +238,7 @@
 			);
 			name = TouchGrassShieldConfiguration;
 			packageProductDependencies = (
+				D40009002F70000100AAA001 /* TouchGrassScreenTime */,
 				D40005002F70000100AAA001 /* TouchGrassCore */,
 			);
 			productName = TouchGrassShieldConfiguration;
@@ -937,6 +940,11 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
+		D40009002F70000100AAA001 /* TouchGrassScreenTime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A68449732F6423F900C85C75 /* XCLocalSwiftPackageReference "../package" */;
+			productName = TouchGrassScreenTime;
+		};
 		D40001002F70000100AAA001 /* TouchGrassCore */ = {
 			isa = XCSwiftPackageProductDependency;
 			package = A68449732F6423F900C85C75 /* XCLocalSwiftPackageReference "../package" */;

@@ -1,6 +1,5 @@
 #if os(iOS)
 import FamilyControls
-import TouchGrassCore
 
 public enum ScreenTimeAuthorization {
     public static var isApproved: Bool {

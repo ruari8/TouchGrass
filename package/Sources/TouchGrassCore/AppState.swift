@@ -1,0 +1,47 @@
+import Foundation
+
+/// Everything Touch Grass remembers, shared between the app and its extensions through the App Group.
+public struct AppState: Codable, Hashable, Sendable {
+    public var hasCompletedSetup: Bool
+    public var blockLists: [BlockList]
+    public var settings: Settings
+    public var locks: [Lock]
+    /// The running total of times the user has touched grass.
+    public var grassCount: Int
+    public var emergencyUnlocks: EmergencyUnlockLedger
+
+    public init(
+        hasCompletedSetup: Bool = false,
+        blockLists: [BlockList] = [],
+        settings: Settings = .preset(.strict),
+        locks: [Lock] = [],
+        grassCount: Int = 0,
+        emergencyUnlocks: EmergencyUnlockLedger = EmergencyUnlockLedger()
+    ) {
+        self.hasCompletedSetup = hasCompletedSetup
+        self.blockLists = blockLists
+        self.settings = settings
+        self.locks = locks
+        self.grassCount = grassCount
+        self.emergencyUnlocks = emergencyUnlocks
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let defaults = AppState()
+        hasCompletedSetup = try container.decodeIfPresent(Bool.self, forKey: .hasCompletedSetup) ?? defaults.hasCompletedSetup
+        blockLists = try container.decodeIfPresent([BlockList].self, forKey: .blockLists) ?? defaults.blockLists
+        settings = try container.decodeIfPresent(Settings.self, forKey: .settings) ?? defaults.settings
+        locks = try container.decodeIfPresent([Lock].self, forKey: .locks) ?? defaults.locks
+        grassCount = try container.decodeIfPresent(Int.self, forKey: .grassCount) ?? defaults.grassCount
+        emergencyUnlocks = try container.decodeIfPresent(EmergencyUnlockLedger.self, forKey: .emergencyUnlocks) ?? defaults.emergencyUnlocks
+    }
+
+    public func blockList(id: UUID) -> BlockList? {
+        blockLists.first { $0.id == id }
+    }
+
+    public var defaultBlockList: BlockList? {
+        settings.defaultBlockListID.flatMap(blockList(id:)) ?? blockLists.first
+    }
+}
