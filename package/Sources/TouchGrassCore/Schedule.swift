@@ -11,6 +11,9 @@ public struct Schedule: Codable, Hashable, Identifiable, Sendable {
     /// The days a window may start on, as `Calendar` weekdays (1 is Sunday).
     public var weekdays: Set<Int>
     public var isEnabled: Bool
+    /// Set on a temporary copy of an edited Schedule's new window. It enforces the added time straight
+    /// away while the edit as a whole waits for the Reset Time, and disappears when the edit applies.
+    public var bridgesEditOf: UUID?
 
     public static let everyDay: Set<Int> = Set(1...7)
 

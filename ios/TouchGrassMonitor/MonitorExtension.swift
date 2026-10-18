@@ -38,12 +38,11 @@ final class MonitorExtension: DeviceActivityMonitor {
     }
 
     /// Changes the state and applies its shields while still holding the file, so the app can't
-    /// slip a change in between and have its shields overwritten with stale ones.
+    /// slip a change in between and have its shields overwritten with stale ones. DeviceActivity
+    /// bookings come after, since they can call back into this extension.
     private func update(at now: Date, _ change: (inout AppState) -> Void) {
-        _ = try? store.update(change) { state in
-            Enforcement.sync(state, at: now)
-            // Waiting rule changes may have just applied.
-            Enforcement.syncActivities(for: state)
-        }
+        guard let state = try? store.update(change, whileLocked: { Enforcement.applyShields(for: $0, at: now) }) else { return }
+        // Waiting rule changes may have just applied, so Schedules and Budgets are re-synced too.
+        Enforcement.scheduleBackgroundWork(for: state, at: now)
     }
 }

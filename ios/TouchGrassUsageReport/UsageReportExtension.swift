@@ -55,12 +55,17 @@ struct BudgetUsageReport: DeviceActivityReportScene {
                             seconds[index] += category.totalActivityDuration
                             continue
                         }
+                        var appSeconds = 0.0
                         for (token, duration) in apps where token.map(selection.applicationTokens.contains) == true {
-                            seconds[index] += duration
+                            appSeconds += duration
                         }
+                        var siteSeconds = 0.0
                         for (token, duration) in sites where token.map(selection.webDomainTokens.contains) == true {
-                            seconds[index] += duration
+                            siteSeconds += duration
                         }
+                        // If the browser itself is on the list too, time on a listed site counts twice.
+                        // These bars are display only; Budgets Lock on iOS's own count.
+                        seconds[index] += appSeconds + siteSeconds
                     }
                 }
             }

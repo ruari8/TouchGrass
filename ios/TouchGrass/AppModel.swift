@@ -86,7 +86,11 @@ final class AppModel {
 
     func recordTouchGrass() {
         let now = Date()
-        change(at: now) { $0.touchGrass(at: now) }
+        change(at: now) { state in
+            state.touchGrass(at: now)
+            // Waiting rule changes that fell due during the Lock can apply now.
+            state.reconcile(at: now)
+        }
     }
 
     /// Only records the use in iCloud once it's saved locally, so a failed save doesn't spend one.
@@ -96,6 +100,7 @@ final class AppModel {
         let saved = change(at: now) { state in
             state.emergencyUnlocks = state.emergencyUnlocks.merged(with: synced)
             try state.useEmergencyUnlock(at: now)
+            state.reconcile(at: now)
         }
         if saved {
             emergencyUnlockSync.save(state.emergencyUnlocks, at: now)
@@ -109,18 +114,19 @@ final class AppModel {
     func changeRules(_ body: (inout Rules) -> Void) {
         let now = Date()
         var outcome = RuleChangeOutcome.applied
-        change(at: now) { state in
+        let saved = change(at: now) { state in
             outcome = state.changeRules(at: now, listCovers: { new, old in new.covers(old) }, body)
             state.reconcile(at: now)
         }
-        show(outcome)
+        if saved { show(outcome) }
     }
 
     func cancelPendingRules() {
         let now = Date()
         var outcome = RuleChangeOutcome.applied
-        change(at: now) { outcome = $0.cancelPendingRules(at: now) }
-        show(outcome)
+        if change(at: now, { outcome = $0.cancelPendingRules(at: now) }) {
+            show(outcome)
+        }
     }
 
     // MARK: Private
@@ -142,10 +148,8 @@ final class AppModel {
     @discardableResult
     private func change(at now: Date = .now, _ body: (inout AppState) throws -> Void) -> Bool {
         do {
-            state = try store.update(body) { state in
-                Enforcement.sync(state, at: now)
-                Enforcement.syncActivities(for: state)
-            }
+            state = try store.update(body) { Enforcement.applyShields(for: $0, at: now) }
+            Enforcement.scheduleBackgroundWork(for: state, at: now)
             scheduleRefresh(after: now)
             return true
         } catch EmergencyUnlockError.noneLeft {

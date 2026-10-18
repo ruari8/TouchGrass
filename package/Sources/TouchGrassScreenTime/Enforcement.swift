@@ -7,11 +7,16 @@ import TouchGrassCore
 
 /// Turns `AppState` into what iOS actually blocks. Called by the app and by the monitor extension
 /// whenever Locks change, so both processes always write the same shields.
+///
+/// Callers apply shields while holding the state file, so shields always match the latest saved
+/// state. DeviceActivity bookings happen after letting go: stopping an activity can call back into
+/// the monitor extension, which would otherwise wait on a file this process is holding.
 public enum Enforcement {
-    /// Applies the shields for every enforced Lock and books a wake-up for the next time they change on their own.
-    public static func sync(_ state: AppState, at now: Date = .now) {
-        applyShields(for: state, at: now)
+    /// Books the DeviceActivity work that changes shields later: the next wake-up, and one activity
+    /// per Schedule and Budget. Call after the state file is released.
+    public static func scheduleBackgroundWork(for state: AppState, at now: Date = .now) {
         scheduleWakeup(for: state, at: now)
+        syncActivities(for: state)
     }
 
     public static func applyShields(for state: AppState, at now: Date) {

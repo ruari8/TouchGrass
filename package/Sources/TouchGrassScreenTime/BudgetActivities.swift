@@ -7,6 +7,11 @@ import TouchGrassCore
 
 /// One repeating DeviceActivity per enabled Budget. Its interval runs from Reset Time to Reset Time,
 /// and its single event fires when the Block List's apps reach the Budget's minutes.
+///
+/// Usage is counted only from when monitoring began (`includesPastActivity` is off). That makes a
+/// threshold callback checkable: real usage can't add up faster than the clock, so a callback that
+/// arrives before that many minutes have passed since counting began is bogus. The cost is that
+/// re-registering mid-day, after an edit or a bogus callback, starts the count again.
 enum BudgetActivities {
     static func sync(for state: AppState, center: DeviceActivityCenter) {
         var desired: [DeviceActivityName: Budget] = [:]
@@ -19,10 +24,10 @@ enum BudgetActivities {
         stale.compactMap(\.budgetID).forEach(Registration.forget)
 
         for (name, budget) in desired {
-            let signature = signature(for: budget, in: state)
-            // Restarting an activity mid-interval re-counts today's usage and triggers callbacks,
-            // so only restart when something about it has changed.
-            if center.activities.contains(name), Registration.signature(for: budget.id) == signature { continue }
+            // Restarting resets today's count, so only restart when something about it has changed.
+            if center.activities.contains(name), Registration.signature(for: budget.id) == signature(for: budget, in: state) {
+                continue
+            }
             register(budget, in: state, center: center)
         }
     }
@@ -43,14 +48,16 @@ enum BudgetActivities {
             categories: selection.categoryTokens,
             webDomains: selection.webDomainTokens,
             threshold: DateComponents(minute: budget.minutes),
-            includesPastActivity: true
+            includesPastActivity: false
         )
 
         let name = DeviceActivityName.budget(budget.id)
         center.stopMonitoring([name])
+        // Recorded first, so a callback that arrives the instant monitoring starts is judged
+        // against this registration rather than an older one.
+        Registration.record(budget.id, signature: signature(for: budget, in: state))
         do {
             try center.startMonitoring(name, during: schedule, events: [.budgetUsedUp: event])
-            Registration.record(budget.id, signature: signature(for: budget, in: state))
         } catch {
             Registration.forget(budget.id)
         }
@@ -68,27 +75,21 @@ extension Enforcement {
     /// Whether a Budget's threshold callback should Lock.
     ///
     /// On iOS 26, `eventDidReachThreshold` sometimes fires within seconds of an activity being
-    /// registered, before any real usage (Apple forums thread 840907). A callback that soon after
-    /// registering is treated as a suspect: the activity is registered again, and the Lock only starts
-    /// if that fresh registration fires straight away too, which is what genuine past usage does.
+    /// registered, before any real usage (Apple forums threads 840907 and 808470). Usage counts from
+    /// the later of the registration and the start of the Budget day, so a genuine callback can't
+    /// arrive before the Budget's minutes have passed on the clock. An earlier one is ignored and the
+    /// Budget re-registered, which never Locks wrongly but restarts today's count.
     public static func shouldLockForBudgetThreshold(_ budgetID: UUID, in state: AppState, at now: Date = .now) -> Bool {
-        guard let registeredAt = BudgetActivities.Registration.registeredAt(budgetID),
-              now.timeIntervalSince(registeredAt) < suspiciousDelay
-        else { return true }
-
-        if let suspect = BudgetActivities.Registration.suspectAt(budgetID), now.timeIntervalSince(suspect) < confirmationWindow {
-            BudgetActivities.Registration.clearSuspect(budgetID)
-            return true
-        }
-
-        guard let budget = state.budget(id: budgetID) else { return false }
-        BudgetActivities.Registration.markSuspect(budgetID, at: now)
+        guard let budget = state.budget(id: budgetID), budget.isEnabled else { return false }
+        let dayStart = state.budgetDay(containing: now).start
+        let countingSince = max(dayStart, BudgetActivities.Registration.registeredAt(budgetID) ?? dayStart)
+        let earliestGenuine = countingSince.addingTimeInterval(TimeInterval(budget.minutes * 60) - thresholdTolerance)
+        guard now < earliestGenuine else { return true }
         BudgetActivities.register(budget, in: state, center: DeviceActivityCenter())
         return false
     }
 
-    static let suspiciousDelay: TimeInterval = 10
-    static let confirmationWindow: TimeInterval = 120
+    static let thresholdTolerance: TimeInterval = 30
 }
 
 extension BudgetActivities {
@@ -103,7 +104,7 @@ extension BudgetActivities {
         }
 
         static func forget(_ id: UUID) {
-            ["signature", "registeredAt", "suspectAt"].forEach { defaults.removeObject(forKey: "budget.\($0).\(id)") }
+            ["signature", "registeredAt"].forEach { defaults.removeObject(forKey: "budget.\($0).\(id)") }
         }
 
         static func signature(for id: UUID) -> String? {
@@ -111,23 +112,7 @@ extension BudgetActivities {
         }
 
         static func registeredAt(_ id: UUID) -> Date? {
-            date(forKey: "budget.registeredAt.\(id)")
-        }
-
-        static func suspectAt(_ id: UUID) -> Date? {
-            date(forKey: "budget.suspectAt.\(id)")
-        }
-
-        static func markSuspect(_ id: UUID, at date: Date) {
-            defaults.set(date.timeIntervalSince1970, forKey: "budget.suspectAt.\(id)")
-        }
-
-        static func clearSuspect(_ id: UUID) {
-            defaults.removeObject(forKey: "budget.suspectAt.\(id)")
-        }
-
-        private static func date(forKey key: String) -> Date? {
-            let value = defaults.double(forKey: key)
+            let value = defaults.double(forKey: "budget.registeredAt.\(id)")
             return value > 0 ? Date(timeIntervalSince1970: value) : nil
         }
     }

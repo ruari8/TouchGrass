@@ -154,14 +154,14 @@ struct SettingsView: View {
             }
 
             Section {
-                DatePicker("Reset Time", selection: Binding(
-                    get: { settings.resetTime.date },
-                    set: { date in
-                        var time = TimeOfDay.midnight
-                        time.date = date
-                        model.changeRules { $0.settings.resetTime = time }
+                Picker("Reset Time", selection: Binding(
+                    get: { settings.resetTime.hour },
+                    set: { hour in model.changeRules { $0.settings.resetTime = TimeOfDay(hour: hour) } }
+                )) {
+                    ForEach(0..<24, id: \.self) { hour in
+                        Text(TimeOfDay(hour: hour).formatted).tag(hour)
                     }
-                ), displayedComponents: .hourAndMinute)
+                }
             } footer: {
                 Text("When Budgets refill and waiting changes apply. Night owls might pick 4:00.")
             }

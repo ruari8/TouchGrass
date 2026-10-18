@@ -241,3 +241,46 @@ private func date(day: Int = 19, _ hour: Int, _ minute: Int = 0) -> Date {
         #expect(state.locks.first?.endsAt == date(day: 20, 7))
     }
 }
+
+@Suite struct MixedEditTests {
+    let social = BlockList(name: "Social")
+    let alwaysCovers: (BlockList, BlockList) -> Bool = { _, _ in true }
+
+    @Test func movingAWindowEarlierLocksTheNewTimeAtOnce() {
+        let bedtime = Schedule(name: "Bedtime", blockListID: social.id, start: TimeOfDay(hour: 22), end: TimeOfDay(hour: 7))
+        var state = AppState(hasCompletedSetup: true, blockLists: [social], schedules: [bedtime])
+
+        // 22:00–07:00 becomes 21:00–06:00: 21:00–22:00 is added now, 06:00–07:00 is only dropped tomorrow.
+        let outcome = state.changeRules(at: date(12), calendar: calendar, listCovers: alwaysCovers) { rules in
+            rules.schedules[0].start = TimeOfDay(hour: 21)
+            rules.schedules[0].end = TimeOfDay(hour: 6)
+        }
+        #expect(outcome == .waitingUntil(date(day: 20, 0)))
+        state.reconcile(at: date(21, 30), calendar: calendar)
+        #expect(state.isLocked(at: date(21, 30)))
+        #expect(state.upcomingRules.schedules.count == 1)
+
+        // Applied once every Lock has ended, after which only the new window remains.
+        state.reconcile(at: date(day: 20, 7), calendar: calendar)
+        #expect(state.schedules.count == 1)
+        #expect(state.schedules[0].start == TimeOfDay(hour: 21))
+    }
+
+    @Test func cancellingRemovesTheBridge() {
+        let bedtime = Schedule(name: "Bedtime", blockListID: social.id, start: TimeOfDay(hour: 22), end: TimeOfDay(hour: 7))
+        var state = AppState(hasCompletedSetup: true, blockLists: [social], schedules: [bedtime])
+        state.changeRules(at: date(12), calendar: calendar, listCovers: alwaysCovers) { rules in
+            rules.schedules[0].start = TimeOfDay(hour: 21)
+            rules.schedules[0].end = TimeOfDay(hour: 6)
+        }
+        #expect(state.schedules.count == 2)
+        state.cancelPendingRules(at: date(13))
+        #expect(state.schedules == [bedtime])
+    }
+
+    @Test func resetTimeIsKeptOnTheHour() {
+        var state = AppState(hasCompletedSetup: true, blockLists: [social], settings: .preset(.flexible))
+        state.changeRules(at: date(12), calendar: calendar, listCovers: alwaysCovers) { $0.settings.resetTime = TimeOfDay(hour: 4, minute: 30) }
+        #expect(state.settings.resetTime == TimeOfDay(hour: 4))
+    }
+}

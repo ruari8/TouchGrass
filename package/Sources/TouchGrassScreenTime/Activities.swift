@@ -7,7 +7,7 @@ extension Enforcement {
     /// Registers one repeating DeviceActivity per enabled Schedule so iOS wakes the monitor
     /// extension when each window opens and closes, and one per enabled Budget to watch its minutes. Activities that already match are left alone:
     /// restarting one inside its window makes iOS call `intervalDidStart` again, which would loop.
-    public static func syncActivities(for state: AppState) {
+    static func syncActivities(for state: AppState) {
         let center = DeviceActivityCenter()
         var desired: [DeviceActivityName: DeviceActivitySchedule] = [:]
         for schedule in state.schedules where schedule.isEnabled {

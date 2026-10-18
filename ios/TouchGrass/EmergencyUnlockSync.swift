@@ -8,14 +8,16 @@ import TouchGrassCore
 struct EmergencyUnlockSync {
     private let store = NSUbiquitousKeyValueStore.default
     private let prefix = "emergencyUnlock."
+    /// Early builds kept every use in one array under this key.
+    private let legacyKey = "emergencyUnlocksUsedAt"
 
     func load() -> EmergencyUnlockLedger {
         store.synchronize()
         let uses = store.dictionaryRepresentation
             .filter { $0.key.hasPrefix(prefix) }
             .compactMap { $0.value as? Double }
-            .map(Date.init(timeIntervalSince1970:))
-        return EmergencyUnlockLedger(usedAt: uses)
+        let legacy = store.array(forKey: legacyKey) as? [Double] ?? []
+        return EmergencyUnlockLedger(usedAt: (uses + legacy).map(Date.init(timeIntervalSince1970:)))
     }
 
     /// Records every outstanding use and forgets ones that have already come back.
@@ -29,6 +31,8 @@ struct EmergencyUnlockSync {
         for use in ledger.usedAt where use > refilled {
             store.set(use.timeIntervalSince1970, forKey: prefix + String(use.timeIntervalSince1970))
         }
+        // Every legacy use is now its own key.
+        store.removeObject(forKey: legacyKey)
         store.synchronize()
     }
 }

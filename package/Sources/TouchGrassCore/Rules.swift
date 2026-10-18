@@ -134,7 +134,28 @@ extension AppState {
             rules = immediate
             return .applied
         }
+        bridgeAddedScheduleTime(from: proposed)
         return .waitingUntil(appliesAt)
+    }
+
+    /// While a loosening edit waits, any time it adds starts now. New Schedules are added as they are.
+    /// An edited Schedule whose new window covers time the old one didn't (22:00–07:00 moved to
+    /// 21:00–06:00) runs a temporary copy of the new window alongside the old one.
+    private mutating func bridgeAddedScheduleTime(from proposed: Rules) {
+        for new in proposed.schedules where new.isEnabled && new.bridgesEditOf == nil {
+            guard rules.automaticRuleCount < AppState.maximumAutomaticRules else { return }
+            guard let old = schedules.first(where: { $0.id == new.id }) else {
+                schedules.append(new)
+                continue
+            }
+            let addsTime = old.blockListID != new.blockListID || !old.covers(new)
+            let alreadyBridged = schedules.contains { $0.bridgesEditOf == new.id && $0.covers(new) && $0.blockListID == new.blockListID }
+            guard addsTime, !alreadyBridged else { continue }
+            var bridge = new
+            bridge.id = UUID()
+            bridge.bridgesEditOf = new.id
+            schedules.append(bridge)
+        }
     }
 
     /// Drops waiting changes, keeping the current rules. Like every rule change, refused while Locked.
@@ -142,6 +163,7 @@ extension AppState {
     public mutating func cancelPendingRules(at now: Date) -> RuleChangeOutcome {
         guard !hasActiveLocks(at: now) else { return .refusedWhileLocked }
         pendingRules = nil
+        schedules.removeAll { $0.bridgesEditOf != nil }
         return .applied
     }
 
@@ -155,8 +177,10 @@ extension AppState {
 }
 
 extension Rules {
-    /// Keeps references valid after Block Lists are deleted.
+    /// Keeps references valid after Block Lists are deleted, and Reset Times on the hour.
     mutating func normalise() {
+        // iOS's usage counting and hourly report segments both work in whole hours.
+        settings.resetTime.minute = 0
         let ids = Set(blockLists.map(\.id))
         schedules.removeAll { !ids.contains($0.blockListID) }
         budgets.removeAll { !ids.contains($0.blockListID) }
