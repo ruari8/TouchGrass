@@ -17,9 +17,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "B10000B22F65000100AAA001"
-               BuildableName = "BlockOSShieldAction.appex"
-               BlueprintName = "BlockOSShieldAction"
-               ReferencedContainer = "container:BlockOS.xcodeproj">
+               BuildableName = "TouchGrassShieldAction.appex"
+               BlueprintName = "TouchGrassShieldAction"
+               ReferencedContainer = "container:TouchGrass.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
          <BuildActionEntry
@@ -31,9 +31,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A684495C2F6418D500C85C75"
-               BuildableName = "BlockOS.app"
-               BlueprintName = "BlockOS"
-               ReferencedContainer = "container:BlockOS.xcodeproj">
+               BuildableName = "TouchGrass.app"
+               BlueprintName = "TouchGrass"
+               ReferencedContainer = "container:TouchGrass.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A684495C2F6418D500C85C75"
-            BuildableName = "BlockOS.app"
-            BlueprintName = "BlockOS"
-            ReferencedContainer = "container:BlockOS.xcodeproj">
+            BuildableName = "TouchGrass.app"
+            BlueprintName = "TouchGrass"
+            ReferencedContainer = "container:TouchGrass.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -81,9 +81,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A684495C2F6418D500C85C75"
-            BuildableName = "BlockOS.app"
-            BlueprintName = "BlockOS"
-            ReferencedContainer = "container:BlockOS.xcodeproj">
+            BuildableName = "TouchGrass.app"
+            BlueprintName = "TouchGrass"
+            ReferencedContainer = "container:TouchGrass.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

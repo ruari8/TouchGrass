@@ -31,7 +31,7 @@ type Env = {
   CHALLENGE_IMAGES: R2Bucket;
   OPENAI_API_KEY?: string;
   OPENAI_MODEL?: string;
-  BLOCKOS_API_TOKEN?: string;
+  TOUCHGRASS_API_TOKEN?: string;
   DEV_AUTO_PASS?: string;
   MAX_UPLOAD_BYTES?: string;
 };
@@ -413,14 +413,14 @@ function requiredString(value: unknown, field: string): string {
 }
 
 function authorize(request: Request, env: Env): Response | null {
-  if (!env.BLOCKOS_API_TOKEN) {
+  if (!env.TOUCHGRASS_API_TOKEN) {
     return null;
   }
 
   const bearer = request.headers.get("authorization")?.replace(/^Bearer\s+/i, "");
-  const header = request.headers.get("x-blockos-api-token");
+  const header = request.headers.get("x-touchgrass-api-token");
 
-  if (bearer === env.BLOCKOS_API_TOKEN || header === env.BLOCKOS_API_TOKEN) {
+  if (bearer === env.TOUCHGRASS_API_TOKEN || header === env.TOUCHGRASS_API_TOKEN) {
     return null;
   }
 
@@ -486,7 +486,7 @@ function cors(response: Response): Response {
   const headers = new Headers(response.headers);
   headers.set("access-control-allow-origin", "*");
   headers.set("access-control-allow-methods", "GET,POST,PUT,OPTIONS");
-  headers.set("access-control-allow-headers", "authorization,content-type,x-blockos-api-token");
+  headers.set("access-control-allow-headers", "authorization,content-type,x-touchgrass-api-token");
 
   return new Response(response.body, {
     status: response.status,

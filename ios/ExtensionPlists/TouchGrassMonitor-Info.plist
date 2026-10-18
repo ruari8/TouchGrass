@@ -23,7 +23,7 @@
 		<key>NSExtensionPointIdentifier</key>
 		<string>com.apple.deviceactivity.monitor-extension</string>
 		<key>NSExtensionPrincipalClass</key>
-		<string>$(PRODUCT_MODULE_NAME).DailyLimitMonitorExtension</string>
+		<string>$(PRODUCT_MODULE_NAME).MonitorExtension</string>
 	</dict>
 </dict>
 </plist>

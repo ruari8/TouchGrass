@@ -1,30 +1,19 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.2
 import PackageDescription
 
 let package = Package(
-    name: "BlockOS",
+    name: "TouchGrassKit",
     platforms: [
-        .iOS(.v17),
-        .macOS(.v14)
+        .iOS(.v26),
+        .macOS(.v26)
     ],
     products: [
-        .library(name: "BlockOSDomain", targets: ["BlockOSDomain"]),
-        .library(name: "BlockOSPersistence", targets: ["BlockOSPersistence"]),
-        .library(name: "BlockOSEnforcement", targets: ["BlockOSEnforcement"]),
-        .library(name: "BlockOSAppSupport", targets: ["BlockOSAppSupport"])
+        .library(name: "TouchGrassCore", targets: ["TouchGrassCore"]),
+        .library(name: "TouchGrassScreenTime", targets: ["TouchGrassScreenTime"])
     ],
     targets: [
-        .target(name: "BlockOSDomain"),
-        .target(name: "BlockOSPersistence", dependencies: ["BlockOSDomain"]),
-        .target(name: "BlockOSEnforcement", dependencies: ["BlockOSDomain"]),
-        .target(
-            name: "BlockOSAppSupport",
-            dependencies: ["BlockOSDomain", "BlockOSPersistence", "BlockOSEnforcement"]
-        ),
-        .testTarget(name: "BlockOSDomainTests", dependencies: ["BlockOSDomain"]),
-        .testTarget(
-            name: "BlockOSAppSupportTests",
-            dependencies: ["BlockOSAppSupport", "BlockOSDomain", "BlockOSEnforcement", "BlockOSPersistence"]
-        )
+        .target(name: "TouchGrassCore"),
+        .target(name: "TouchGrassScreenTime", dependencies: ["TouchGrassCore"]),
+        .testTarget(name: "TouchGrassCoreTests", dependencies: ["TouchGrassCore"])
     ]
 )

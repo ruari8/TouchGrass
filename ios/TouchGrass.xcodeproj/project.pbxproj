@@ -7,14 +7,18 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		A68449752F6423F900C85C75 /* BlockOSAppSupport in Frameworks */ = {isa = PBXBuildFile; productRef = A68449742F6423F900C85C75 /* BlockOSAppSupport */; };
-		A68449772F6423F900C85C75 /* BlockOSDomain in Frameworks */ = {isa = PBXBuildFile; productRef = A68449762F6423F900C85C75 /* BlockOSDomain */; };
-		A68449792F6423F900C85C75 /* BlockOSEnforcement in Frameworks */ = {isa = PBXBuildFile; productRef = A68449782F6423F900C85C75 /* BlockOSEnforcement */; };
-		A684497B2F6423F900C85C75 /* BlockOSPersistence in Frameworks */ = {isa = PBXBuildFile; productRef = A684497A2F6423F900C85C75 /* BlockOSPersistence */; };
-		B10000012F65000100AAA001 /* BlockOSShieldConfiguration.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		B10000022F65000100AAA001 /* BlockOSShieldAction.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B10000122F65000100AAA001 /* BlockOSShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		B20000012F65000100AAA001 /* BlockOSUsageReport.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B20000112F65000100AAA001 /* BlockOSUsageReport.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		C30000012F66000100AAA001 /* BlockOSDailyLimitMonitor.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = C30000112F66000100AAA001 /* BlockOSDailyLimitMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		D50001002F70000100AAA001 /* TouchGrassCore in Frameworks */ = {isa = PBXBuildFile; productRef = D40001002F70000100AAA001 /* TouchGrassCore */; };
+		D50002002F70000100AAA001 /* TouchGrassScreenTime in Frameworks */ = {isa = PBXBuildFile; productRef = D40002002F70000100AAA001 /* TouchGrassScreenTime */; };
+		D50003002F70000100AAA001 /* TouchGrassCore in Frameworks */ = {isa = PBXBuildFile; productRef = D40003002F70000100AAA001 /* TouchGrassCore */; };
+		D50004002F70000100AAA001 /* TouchGrassScreenTime in Frameworks */ = {isa = PBXBuildFile; productRef = D40004002F70000100AAA001 /* TouchGrassScreenTime */; };
+		D50005002F70000100AAA001 /* TouchGrassCore in Frameworks */ = {isa = PBXBuildFile; productRef = D40005002F70000100AAA001 /* TouchGrassCore */; };
+		D50006002F70000100AAA001 /* TouchGrassCore in Frameworks */ = {isa = PBXBuildFile; productRef = D40006002F70000100AAA001 /* TouchGrassCore */; };
+		D50007002F70000100AAA001 /* TouchGrassScreenTime in Frameworks */ = {isa = PBXBuildFile; productRef = D40007002F70000100AAA001 /* TouchGrassScreenTime */; };
+		D50008002F70000100AAA001 /* TouchGrassCore in Frameworks */ = {isa = PBXBuildFile; productRef = D40008002F70000100AAA001 /* TouchGrassCore */; };
+		B10000012F65000100AAA001 /* TouchGrassShieldConfiguration.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B10000112F65000100AAA001 /* TouchGrassShieldConfiguration.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B10000022F65000100AAA001 /* TouchGrassShieldAction.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = B10000122F65000100AAA001 /* TouchGrassShieldAction.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B20000012F65000100AAA001 /* TouchGrassUsageReport.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = B20000112F65000100AAA001 /* TouchGrassUsageReport.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		C30000012F66000100AAA001 /* TouchGrassMonitor.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = C30000112F66000100AAA001 /* TouchGrassMonitor.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -23,28 +27,28 @@
 			containerPortal = A68449552F6418D500C85C75 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B10000B12F65000100AAA001;
-			remoteInfo = BlockOSShieldConfiguration;
+			remoteInfo = TouchGrassShieldConfiguration;
 		};
 		B10000522F65000100AAA001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A68449552F6418D500C85C75 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B10000B22F65000100AAA001;
-			remoteInfo = BlockOSShieldAction;
+			remoteInfo = TouchGrassShieldAction;
 		};
 		B20000512F65000100AAA001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A68449552F6418D500C85C75 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = B20000B12F65000100AAA001;
-			remoteInfo = BlockOSUsageReport;
+			remoteInfo = TouchGrassUsageReport;
 		};
 		C30000512F66000100AAA001 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = A68449552F6418D500C85C75 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = C30000B12F66000100AAA001;
-			remoteInfo = BlockOSDailyLimitMonitor;
+			remoteInfo = TouchGrassMonitor;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -55,9 +59,9 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				B10000012F65000100AAA001 /* BlockOSShieldConfiguration.appex in Embed App Extensions */,
-				B10000022F65000100AAA001 /* BlockOSShieldAction.appex in Embed App Extensions */,
-				C30000012F66000100AAA001 /* BlockOSDailyLimitMonitor.appex in Embed App Extensions */,
+				B10000012F65000100AAA001 /* TouchGrassShieldConfiguration.appex in Embed App Extensions */,
+				B10000022F65000100AAA001 /* TouchGrassShieldAction.appex in Embed App Extensions */,
+				C30000012F66000100AAA001 /* TouchGrassMonitor.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -68,7 +72,7 @@
 			dstPath = Extensions;
 			dstSubfolderSpec = 1;
 			files = (
-				B20000012F65000100AAA001 /* BlockOSUsageReport.appex in Embed Foundation Extensions */,
+				B20000012F65000100AAA001 /* TouchGrassUsageReport.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -76,37 +80,37 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
-		A684495D2F6418D500C85C75 /* BlockOS.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BlockOS.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSShieldConfiguration.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		B10000122F65000100AAA001 /* BlockOSShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		B20000112F65000100AAA001 /* BlockOSUsageReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSUsageReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
-		C30000112F66000100AAA001 /* BlockOSDailyLimitMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = BlockOSDailyLimitMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A684495D2F6418D500C85C75 /* TouchGrass.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TouchGrass.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000112F65000100AAA001 /* TouchGrassShieldConfiguration.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TouchGrassShieldConfiguration.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B10000122F65000100AAA001 /* TouchGrassShieldAction.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TouchGrassShieldAction.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		B20000112F65000100AAA001 /* TouchGrassUsageReport.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TouchGrassUsageReport.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		C30000112F66000100AAA001 /* TouchGrassMonitor.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = TouchGrassMonitor.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
-		A684495F2F6418D500C85C75 /* BlockOS */ = {
+		A684495F2F6418D500C85C75 /* TouchGrass */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = BlockOS;
+			path = TouchGrass;
 			sourceTree = "<group>";
 		};
-		B10000212F65000100AAA001 /* BlockOSShieldConfiguration */ = {
+		B10000212F65000100AAA001 /* TouchGrassShieldConfiguration */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = BlockOSShieldConfiguration;
+			path = TouchGrassShieldConfiguration;
 			sourceTree = "<group>";
 		};
-		B10000222F65000100AAA001 /* BlockOSShieldAction */ = {
+		B10000222F65000100AAA001 /* TouchGrassShieldAction */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = BlockOSShieldAction;
+			path = TouchGrassShieldAction;
 			sourceTree = "<group>";
 		};
-		B20000212F65000100AAA001 /* BlockOSUsageReport */ = {
+		B20000212F65000100AAA001 /* TouchGrassUsageReport */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = BlockOSUsageReport;
+			path = TouchGrassUsageReport;
 			sourceTree = "<group>";
 		};
-		C30000212F66000100AAA001 /* BlockOSDailyLimitMonitor */ = {
+		C30000212F66000100AAA001 /* TouchGrassMonitor */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = BlockOSDailyLimitMonitor;
+			path = TouchGrassMonitor;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -116,10 +120,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A684497B2F6423F900C85C75 /* BlockOSPersistence in Frameworks */,
-				A68449772F6423F900C85C75 /* BlockOSDomain in Frameworks */,
-				A68449752F6423F900C85C75 /* BlockOSAppSupport in Frameworks */,
-				A68449792F6423F900C85C75 /* BlockOSEnforcement in Frameworks */,
+				D50002002F70000100AAA001 /* TouchGrassScreenTime in Frameworks */,
+				D50001002F70000100AAA001 /* TouchGrassCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -127,6 +129,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D50005002F70000100AAA001 /* TouchGrassCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -134,6 +137,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D50007002F70000100AAA001 /* TouchGrassScreenTime in Frameworks */,
+				D50006002F70000100AAA001 /* TouchGrassCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -141,6 +146,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D50008002F70000100AAA001 /* TouchGrassCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -148,6 +154,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D50004002F70000100AAA001 /* TouchGrassScreenTime in Frameworks */,
+				D50003002F70000100AAA001 /* TouchGrassCore in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -157,11 +165,11 @@
 		A68449542F6418D500C85C75 = {
 			isa = PBXGroup;
 			children = (
-				A684495F2F6418D500C85C75 /* BlockOS */,
-				B10000212F65000100AAA001 /* BlockOSShieldConfiguration */,
-				B10000222F65000100AAA001 /* BlockOSShieldAction */,
-				B20000212F65000100AAA001 /* BlockOSUsageReport */,
-				C30000212F66000100AAA001 /* BlockOSDailyLimitMonitor */,
+				A684495F2F6418D500C85C75 /* TouchGrass */,
+				B10000212F65000100AAA001 /* TouchGrassShieldConfiguration */,
+				B10000222F65000100AAA001 /* TouchGrassShieldAction */,
+				B20000212F65000100AAA001 /* TouchGrassUsageReport */,
+				C30000212F66000100AAA001 /* TouchGrassMonitor */,
 				A684495E2F6418D500C85C75 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -169,11 +177,11 @@
 		A684495E2F6418D500C85C75 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				A684495D2F6418D500C85C75 /* BlockOS.app */,
-				B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */,
-				B10000122F65000100AAA001 /* BlockOSShieldAction.appex */,
-				B20000112F65000100AAA001 /* BlockOSUsageReport.appex */,
-				C30000112F66000100AAA001 /* BlockOSDailyLimitMonitor.appex */,
+				A684495D2F6418D500C85C75 /* TouchGrass.app */,
+				B10000112F65000100AAA001 /* TouchGrassShieldConfiguration.appex */,
+				B10000122F65000100AAA001 /* TouchGrassShieldAction.appex */,
+				B20000112F65000100AAA001 /* TouchGrassUsageReport.appex */,
+				C30000112F66000100AAA001 /* TouchGrassMonitor.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -181,9 +189,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		A684495C2F6418D500C85C75 /* BlockOS */ = {
+		A684495C2F6418D500C85C75 /* TouchGrass */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A68449682F6418D600C85C75 /* Build configuration list for PBXNativeTarget "BlockOS" */;
+			buildConfigurationList = A68449682F6418D600C85C75 /* Build configuration list for PBXNativeTarget "TouchGrass" */;
 			buildPhases = (
 				A68449592F6418D500C85C75 /* Sources */,
 				A684495A2F6418D500C85C75 /* Frameworks */,
@@ -200,22 +208,20 @@
 				C30000612F66000100AAA001 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
-				A684495F2F6418D500C85C75 /* BlockOS */,
+				A684495F2F6418D500C85C75 /* TouchGrass */,
 			);
-			name = BlockOS;
+			name = TouchGrass;
 			packageProductDependencies = (
-				A68449742F6423F900C85C75 /* BlockOSAppSupport */,
-				A68449762F6423F900C85C75 /* BlockOSDomain */,
-				A68449782F6423F900C85C75 /* BlockOSEnforcement */,
-				A684497A2F6423F900C85C75 /* BlockOSPersistence */,
+				D40002002F70000100AAA001 /* TouchGrassScreenTime */,
+				D40001002F70000100AAA001 /* TouchGrassCore */,
 			);
-			productName = BlockOS;
-			productReference = A684495D2F6418D500C85C75 /* BlockOS.app */;
+			productName = TouchGrass;
+			productReference = A684495D2F6418D500C85C75 /* TouchGrass.app */;
 			productType = "com.apple.product-type.application";
 		};
-		B10000B12F65000100AAA001 /* BlockOSShieldConfiguration */ = {
+		B10000B12F65000100AAA001 /* TouchGrassShieldConfiguration */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B10000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSShieldConfiguration" */;
+			buildConfigurationList = B10000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "TouchGrassShieldConfiguration" */;
 			buildPhases = (
 				B10000812F65000100AAA001 /* Sources */,
 				B10000412F65000100AAA001 /* Frameworks */,
@@ -226,18 +232,19 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				B10000212F65000100AAA001 /* BlockOSShieldConfiguration */,
+				B10000212F65000100AAA001 /* TouchGrassShieldConfiguration */,
 			);
-			name = BlockOSShieldConfiguration;
+			name = TouchGrassShieldConfiguration;
 			packageProductDependencies = (
+				D40005002F70000100AAA001 /* TouchGrassCore */,
 			);
-			productName = BlockOSShieldConfiguration;
-			productReference = B10000112F65000100AAA001 /* BlockOSShieldConfiguration.appex */;
+			productName = TouchGrassShieldConfiguration;
+			productReference = B10000112F65000100AAA001 /* TouchGrassShieldConfiguration.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		B10000B22F65000100AAA001 /* BlockOSShieldAction */ = {
+		B10000B22F65000100AAA001 /* TouchGrassShieldAction */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B10000A22F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSShieldAction" */;
+			buildConfigurationList = B10000A22F65000100AAA001 /* Build configuration list for PBXNativeTarget "TouchGrassShieldAction" */;
 			buildPhases = (
 				B10000822F65000100AAA001 /* Sources */,
 				B10000422F65000100AAA001 /* Frameworks */,
@@ -248,18 +255,20 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				B10000222F65000100AAA001 /* BlockOSShieldAction */,
+				B10000222F65000100AAA001 /* TouchGrassShieldAction */,
 			);
-			name = BlockOSShieldAction;
+			name = TouchGrassShieldAction;
 			packageProductDependencies = (
+				D40007002F70000100AAA001 /* TouchGrassScreenTime */,
+				D40006002F70000100AAA001 /* TouchGrassCore */,
 			);
-			productName = BlockOSShieldAction;
-			productReference = B10000122F65000100AAA001 /* BlockOSShieldAction.appex */;
+			productName = TouchGrassShieldAction;
+			productReference = B10000122F65000100AAA001 /* TouchGrassShieldAction.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
-		B20000B12F65000100AAA001 /* BlockOSUsageReport */ = {
+		B20000B12F65000100AAA001 /* TouchGrassUsageReport */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = B20000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSUsageReport" */;
+			buildConfigurationList = B20000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "TouchGrassUsageReport" */;
 			buildPhases = (
 				B20000812F65000100AAA001 /* Sources */,
 				B20000412F65000100AAA001 /* Frameworks */,
@@ -270,18 +279,19 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				B20000212F65000100AAA001 /* BlockOSUsageReport */,
+				B20000212F65000100AAA001 /* TouchGrassUsageReport */,
 			);
-			name = BlockOSUsageReport;
+			name = TouchGrassUsageReport;
 			packageProductDependencies = (
+				D40008002F70000100AAA001 /* TouchGrassCore */,
 			);
-			productName = BlockOSUsageReport;
-			productReference = B20000112F65000100AAA001 /* BlockOSUsageReport.appex */;
+			productName = TouchGrassUsageReport;
+			productReference = B20000112F65000100AAA001 /* TouchGrassUsageReport.appex */;
 			productType = "com.apple.product-type.extensionkit-extension";
 		};
-		C30000B12F66000100AAA001 /* BlockOSDailyLimitMonitor */ = {
+		C30000B12F66000100AAA001 /* TouchGrassMonitor */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = C30000A12F66000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSDailyLimitMonitor" */;
+			buildConfigurationList = C30000A12F66000100AAA001 /* Build configuration list for PBXNativeTarget "TouchGrassMonitor" */;
 			buildPhases = (
 				C30000812F66000100AAA001 /* Sources */,
 				C30000412F66000100AAA001 /* Frameworks */,
@@ -292,13 +302,15 @@
 			dependencies = (
 			);
 			fileSystemSynchronizedGroups = (
-				C30000212F66000100AAA001 /* BlockOSDailyLimitMonitor */,
+				C30000212F66000100AAA001 /* TouchGrassMonitor */,
 			);
-			name = BlockOSDailyLimitMonitor;
+			name = TouchGrassMonitor;
 			packageProductDependencies = (
+				D40004002F70000100AAA001 /* TouchGrassScreenTime */,
+				D40003002F70000100AAA001 /* TouchGrassCore */,
 			);
-			productName = BlockOSDailyLimitMonitor;
-			productReference = C30000112F66000100AAA001 /* BlockOSDailyLimitMonitor.appex */;
+			productName = TouchGrassMonitor;
+			productReference = C30000112F66000100AAA001 /* TouchGrassMonitor.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -343,7 +355,7 @@
 					};
 				};
 			};
-			buildConfigurationList = A68449582F6418D500C85C75 /* Build configuration list for PBXProject "BlockOS" */;
+			buildConfigurationList = A68449582F6418D500C85C75 /* Build configuration list for PBXProject "TouchGrass" */;
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
 			knownRegions = (
@@ -360,11 +372,11 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				A684495C2F6418D500C85C75 /* BlockOS */,
-				B10000B12F65000100AAA001 /* BlockOSShieldConfiguration */,
-				B10000B22F65000100AAA001 /* BlockOSShieldAction */,
-				B20000B12F65000100AAA001 /* BlockOSUsageReport */,
-				C30000B12F66000100AAA001 /* BlockOSDailyLimitMonitor */,
+				A684495C2F6418D500C85C75 /* TouchGrass */,
+				B10000B12F65000100AAA001 /* TouchGrassShieldConfiguration */,
+				B10000B22F65000100AAA001 /* TouchGrassShieldAction */,
+				B20000B12F65000100AAA001 /* TouchGrassUsageReport */,
+				C30000B12F66000100AAA001 /* TouchGrassMonitor */,
 			);
 		};
 /* End PBXProject section */
@@ -448,22 +460,22 @@
 /* Begin PBXTargetDependency section */
 		B10000612F65000100AAA001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B10000B12F65000100AAA001 /* BlockOSShieldConfiguration */;
+			target = B10000B12F65000100AAA001 /* TouchGrassShieldConfiguration */;
 			targetProxy = B10000512F65000100AAA001 /* PBXContainerItemProxy */;
 		};
 		B10000622F65000100AAA001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B10000B22F65000100AAA001 /* BlockOSShieldAction */;
+			target = B10000B22F65000100AAA001 /* TouchGrassShieldAction */;
 			targetProxy = B10000522F65000100AAA001 /* PBXContainerItemProxy */;
 		};
 		B20000612F65000100AAA001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = B20000B12F65000100AAA001 /* BlockOSUsageReport */;
+			target = B20000B12F65000100AAA001 /* TouchGrassUsageReport */;
 			targetProxy = B20000512F65000100AAA001 /* PBXContainerItemProxy */;
 		};
 		C30000612F66000100AAA001 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = C30000B12F66000100AAA001 /* BlockOSDailyLimitMonitor */;
+			target = C30000B12F66000100AAA001 /* TouchGrassMonitor */;
 			targetProxy = C30000512F66000100AAA001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -593,15 +605,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = BlockOS/BlockOS.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TouchGrass/TouchGrass.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_BLOCKOS_CHALLENGE_API_BASE_URL = "$(BLOCKOS_CHALLENGE_API_BASE_URL)";
-				INFOPLIST_KEY_BLOCKOS_CHALLENGE_API_TOKEN = "$(BLOCKOS_CHALLENGE_API_TOKEN)";
-				INFOPLIST_KEY_NSCameraUsageDescription = "BlockOS uses the camera so you can complete a real-world unlock challenge.";
+				INFOPLIST_KEY_CFBundleDisplayName = "Touch Grass";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Touch Grass uses the camera to check you are outside, touching real grass.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -612,7 +623,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.TouchGrass;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -629,15 +640,14 @@
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				CODE_SIGN_ENTITLEMENTS = BlockOS/BlockOS.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TouchGrass/TouchGrass.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_KEY_BLOCKOS_CHALLENGE_API_BASE_URL = "$(BLOCKOS_CHALLENGE_API_BASE_URL)";
-				INFOPLIST_KEY_BLOCKOS_CHALLENGE_API_TOKEN = "$(BLOCKOS_CHALLENGE_API_TOKEN)";
-				INFOPLIST_KEY_NSCameraUsageDescription = "BlockOS uses the camera so you can complete a real-world unlock challenge.";
+				INFOPLIST_KEY_CFBundleDisplayName = "Touch Grass";
+				INFOPLIST_KEY_NSCameraUsageDescription = "Touch Grass uses the camera to check you are outside, touching real grass.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
@@ -648,7 +658,7 @@
 					"@executable_path/Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.TouchGrass;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -664,12 +674,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = BlockOSShieldConfiguration/BlockOSShieldConfiguration.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TouchGrassShieldConfiguration/TouchGrassShieldConfiguration.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "ExtensionPlists/BlockOSShieldConfiguration-Info.plist";
+				INFOPLIST_FILE = "ExtensionPlists/TouchGrassShieldConfiguration-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -677,7 +687,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.ShieldConfiguration;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.TouchGrass.ShieldConfiguration;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -689,12 +699,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = BlockOSShieldConfiguration/BlockOSShieldConfiguration.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TouchGrassShieldConfiguration/TouchGrassShieldConfiguration.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "ExtensionPlists/BlockOSShieldConfiguration-Info.plist";
+				INFOPLIST_FILE = "ExtensionPlists/TouchGrassShieldConfiguration-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -702,7 +712,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.ShieldConfiguration;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.TouchGrass.ShieldConfiguration;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -714,12 +724,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = BlockOSShieldAction/BlockOSShieldAction.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TouchGrassShieldAction/TouchGrassShieldAction.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "ExtensionPlists/BlockOSShieldAction-Info.plist";
+				INFOPLIST_FILE = "ExtensionPlists/TouchGrassShieldAction-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -727,7 +737,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.ShieldAction;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.TouchGrass.ShieldAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -739,12 +749,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = BlockOSShieldAction/BlockOSShieldAction.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TouchGrassShieldAction/TouchGrassShieldAction.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "ExtensionPlists/BlockOSShieldAction-Info.plist";
+				INFOPLIST_FILE = "ExtensionPlists/TouchGrassShieldAction-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -752,7 +762,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.ShieldAction;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.TouchGrass.ShieldAction;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -764,12 +774,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = BlockOSUsageReport/BlockOSUsageReport.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TouchGrassUsageReport/TouchGrassUsageReport.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "ExtensionPlists/BlockOSUsageReport-Info.plist";
+				INFOPLIST_FILE = "ExtensionPlists/TouchGrassUsageReport-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -777,7 +787,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.UsageReport;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.TouchGrass.UsageReport;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -789,12 +799,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = BlockOSUsageReport/BlockOSUsageReport.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TouchGrassUsageReport/TouchGrassUsageReport.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "ExtensionPlists/BlockOSUsageReport-Info.plist";
+				INFOPLIST_FILE = "ExtensionPlists/TouchGrassUsageReport-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -802,7 +812,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.UsageReport;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.TouchGrass.UsageReport;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -814,12 +824,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = BlockOSDailyLimitMonitor/BlockOSDailyLimitMonitor.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TouchGrassMonitor/TouchGrassMonitor.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "ExtensionPlists/BlockOSDailyLimitMonitor-Info.plist";
+				INFOPLIST_FILE = "ExtensionPlists/TouchGrassMonitor-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -827,7 +837,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.DailyLimitMonitor;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.TouchGrass.Monitor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -839,12 +849,12 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = BlockOSDailyLimitMonitor/BlockOSDailyLimitMonitor.entitlements;
+				CODE_SIGN_ENTITLEMENTS = TouchGrassMonitor/TouchGrassMonitor.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = YM9WKCY3CH;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = "ExtensionPlists/BlockOSDailyLimitMonitor-Info.plist";
+				INFOPLIST_FILE = "ExtensionPlists/TouchGrassMonitor-Info.plist";
 				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -852,7 +862,7 @@
 					"@executable_path/../../Frameworks",
 				);
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = pear.BlockOS.DailyLimitMonitor;
+				PRODUCT_BUNDLE_IDENTIFIER = pear.TouchGrass.Monitor;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -863,7 +873,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		A68449582F6418D500C85C75 /* Build configuration list for PBXProject "BlockOS" */ = {
+		A68449582F6418D500C85C75 /* Build configuration list for PBXProject "TouchGrass" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A68449662F6418D600C85C75 /* Debug */,
@@ -872,7 +882,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A68449682F6418D600C85C75 /* Build configuration list for PBXNativeTarget "BlockOS" */ = {
+		A68449682F6418D600C85C75 /* Build configuration list for PBXNativeTarget "TouchGrass" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A68449692F6418D600C85C75 /* Debug */,
@@ -881,7 +891,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B10000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSShieldConfiguration" */ = {
+		B10000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "TouchGrassShieldConfiguration" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B10000912F65000100AAA001 /* Debug */,
@@ -890,7 +900,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B10000A22F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSShieldAction" */ = {
+		B10000A22F65000100AAA001 /* Build configuration list for PBXNativeTarget "TouchGrassShieldAction" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B10000932F65000100AAA001 /* Debug */,
@@ -899,7 +909,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		B20000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSUsageReport" */ = {
+		B20000A12F65000100AAA001 /* Build configuration list for PBXNativeTarget "TouchGrassUsageReport" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				B20000912F65000100AAA001 /* Debug */,
@@ -908,7 +918,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		C30000A12F66000100AAA001 /* Build configuration list for PBXNativeTarget "BlockOSDailyLimitMonitor" */ = {
+		C30000A12F66000100AAA001 /* Build configuration list for PBXNativeTarget "TouchGrassMonitor" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				C30000912F66000100AAA001 /* Debug */,
@@ -927,21 +937,45 @@
 /* End XCLocalSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
-		A68449742F6423F900C85C75 /* BlockOSAppSupport */ = {
+		D40001002F70000100AAA001 /* TouchGrassCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = BlockOSAppSupport;
+			package = A68449732F6423F900C85C75 /* XCLocalSwiftPackageReference "../package" */;
+			productName = TouchGrassCore;
 		};
-		A68449762F6423F900C85C75 /* BlockOSDomain */ = {
+		D40002002F70000100AAA001 /* TouchGrassScreenTime */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = BlockOSDomain;
+			package = A68449732F6423F900C85C75 /* XCLocalSwiftPackageReference "../package" */;
+			productName = TouchGrassScreenTime;
 		};
-		A68449782F6423F900C85C75 /* BlockOSEnforcement */ = {
+		D40003002F70000100AAA001 /* TouchGrassCore */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = BlockOSEnforcement;
+			package = A68449732F6423F900C85C75 /* XCLocalSwiftPackageReference "../package" */;
+			productName = TouchGrassCore;
 		};
-		A684497A2F6423F900C85C75 /* BlockOSPersistence */ = {
+		D40004002F70000100AAA001 /* TouchGrassScreenTime */ = {
 			isa = XCSwiftPackageProductDependency;
-			productName = BlockOSPersistence;
+			package = A68449732F6423F900C85C75 /* XCLocalSwiftPackageReference "../package" */;
+			productName = TouchGrassScreenTime;
+		};
+		D40005002F70000100AAA001 /* TouchGrassCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A68449732F6423F900C85C75 /* XCLocalSwiftPackageReference "../package" */;
+			productName = TouchGrassCore;
+		};
+		D40006002F70000100AAA001 /* TouchGrassCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A68449732F6423F900C85C75 /* XCLocalSwiftPackageReference "../package" */;
+			productName = TouchGrassCore;
+		};
+		D40007002F70000100AAA001 /* TouchGrassScreenTime */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A68449732F6423F900C85C75 /* XCLocalSwiftPackageReference "../package" */;
+			productName = TouchGrassScreenTime;
+		};
+		D40008002F70000100AAA001 /* TouchGrassCore */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = A68449732F6423F900C85C75 /* XCLocalSwiftPackageReference "../package" */;
+			productName = TouchGrassCore;
 		};
 /* End XCSwiftPackageProductDependency section */
 	};

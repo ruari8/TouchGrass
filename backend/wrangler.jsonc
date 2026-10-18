@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "blockos-challenge-worker",
+  "name": "touchgrass-challenge-worker",
   "main": "src/index.ts",
   "compatibility_date": "2026-05-31",
   "observability": {
@@ -14,7 +14,7 @@
   "r2_buckets": [
     {
       "binding": "CHALLENGE_IMAGES",
-      "bucket_name": "blockos-challenge-images"
+      "bucket_name": "touchgrass-challenge-images"
     }
   ]
 }

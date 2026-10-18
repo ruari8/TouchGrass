@@ -15,7 +15,7 @@ The Worker lives in `backend/` and exposes:
 - `POST /challenge-attempts/:id/submit`
 - `GET /challenge-attempts/:id`
 
-Images and attempt metadata are stored in the `CHALLENGE_IMAGES` R2 bucket. The Worker accepts an optional bearer token through `BLOCKOS_API_TOKEN`; use it for any non-local deployment.
+Images and attempt metadata are stored in the `CHALLENGE_IMAGES` R2 bucket. The Worker accepts an optional bearer token through `TOUCHGRASS_API_TOKEN`; use it for any non-local deployment.
 
 ## Local Setup
 
@@ -38,34 +38,34 @@ Do not use `DEV_AUTO_PASS=true` in production.
 ```sh
 cd backend
 npx wrangler login
-npx wrangler r2 bucket create blockos-challenge-images
+npx wrangler r2 bucket create touchgrass-challenge-images
 npx wrangler secret put OPENAI_API_KEY
-npx wrangler secret put BLOCKOS_API_TOKEN
+npx wrangler secret put TOUCHGRASS_API_TOKEN
 npm run deploy
 ```
 
-Generate `BLOCKOS_API_TOKEN` with a password manager or:
+Generate `TOUCHGRASS_API_TOKEN` with a password manager or:
 
 ```sh
 openssl rand -base64 32
 ```
 
-The deployed Worker URL becomes the app's `BLOCKOS_CHALLENGE_API_BASE_URL`.
+The deployed Worker URL becomes the app's `TOUCHGRASS_CHALLENGE_API_BASE_URL`.
 
 ## iOS Configuration
 
-Set these build settings for the `BlockOS` app target:
+Set these build settings for the `TouchGrass` app target:
 
-- `BLOCKOS_CHALLENGE_API_BASE_URL=https://<your-worker>.<your-account>.workers.dev`
-- `BLOCKOS_CHALLENGE_API_TOKEN=<same token used for BLOCKOS_API_TOKEN>`
+- `TOUCHGRASS_CHALLENGE_API_BASE_URL=https://<your-worker>.<your-account>.workers.dev`
+- `TOUCHGRASS_CHALLENGE_API_TOKEN=<same token used for TOUCHGRASS_API_TOKEN>`
 
 The generated Info.plist forwards both values into the app. Empty or unresolved `$(...)` values are ignored, so local builds without backend configuration keep using the friction-only path.
 
 For ad-hoc simulator/device testing, the same keys can be set through `UserDefaults` before launching the unlock flow:
 
 ```swift
-UserDefaults.standard.set("https://<worker-url>", forKey: "BLOCKOS_CHALLENGE_API_BASE_URL")
-UserDefaults.standard.set("<token>", forKey: "BLOCKOS_CHALLENGE_API_TOKEN")
+UserDefaults.standard.set("https://<worker-url>", forKey: "TOUCHGRASS_CHALLENGE_API_BASE_URL")
+UserDefaults.standard.set("<token>", forKey: "TOUCHGRASS_CHALLENGE_API_TOKEN")
 ```
 
 Never commit real API keys, Worker tokens, or `.dev.vars`.

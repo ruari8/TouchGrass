@@ -4,7 +4,7 @@
 <dict>
 	<key>com.apple.security.application-groups</key>
 	<array>
-		<string>group.pear.BlockOS</string>
+		<string>group.pear.TouchGrass</string>
 	</array>
 	<key>com.apple.developer.family-controls</key>
 	<true/>

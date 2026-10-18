@@ -24,11 +24,11 @@ final class ShieldConfigurationExtension: ShieldConfigurationDataSource {
             backgroundColor: ShieldPalette.background,
             icon: ShieldPalette.icon,
             title: ShieldConfiguration.Label(
-                text: "This can wait.",
+                text: "Locked.",
                 color: ShieldPalette.title
             ),
             subtitle: ShieldConfiguration.Label(
-                text: "BlockOS is protecting \(targetName). Return to BlockOS and complete your Touch Grass challenge to unlock.",
+                text: "\(targetName) is locked. Go touch grass.",
                 color: ShieldPalette.subtitle
             ),
             primaryButtonLabel: ShieldConfiguration.Label(

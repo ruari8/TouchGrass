@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "A684495C2F6418D500C85C75"
-               BuildableName = "BlockOS.app"
-               BlueprintName = "BlockOS"
-               ReferencedContainer = "container:BlockOS.xcodeproj">
+               BuildableName = "TouchGrass.app"
+               BlueprintName = "TouchGrass"
+               ReferencedContainer = "container:TouchGrass.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -45,9 +45,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A684495C2F6418D500C85C75"
-            BuildableName = "BlockOS.app"
-            BlueprintName = "BlockOS"
-            ReferencedContainer = "container:BlockOS.xcodeproj">
+            BuildableName = "TouchGrass.app"
+            BlueprintName = "TouchGrass"
+            ReferencedContainer = "container:TouchGrass.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -62,9 +62,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "A684495C2F6418D500C85C75"
-            BuildableName = "BlockOS.app"
-            BlueprintName = "BlockOS"
-            ReferencedContainer = "container:BlockOS.xcodeproj">
+            BuildableName = "TouchGrass.app"
+            BlueprintName = "TouchGrass"
+            ReferencedContainer = "container:TouchGrass.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>
