@@ -7,13 +7,16 @@ import UserNotifications
 /// First run: Screen Time permission, pick distracting apps, choose a style, then a practice Touch Grass.
 struct SetupView: View {
     enum Step: Int, CaseIterable {
-        case welcome, screenTime, apps, style, practice
+        case welcome, screenTime, apps, style, bedtime, practice
     }
 
     @Environment(AppModel.self) private var model
     @State private var step = Step.welcome
     @State private var blockList = BlockList(name: "Distractions")
     @State private var style = Style.strict
+    @State private var wantsBedtime = true
+    @State private var bedtimeStart = TimeOfDay(hour: 22)
+    @State private var bedtimeEnd = TimeOfDay(hour: 7)
     @State private var isPicking = false
     @State private var isPracticing = false
 
@@ -68,8 +71,19 @@ struct SetupView: View {
             ForEach(Style.allCases, id: \.self) { option in
                 StyleCard(style: option, isSelected: style == option) { style = option }
             }
+            Button("Continue") { step = .bedtime }
+                .buttonStyle(.primary)
+
+        case .bedtime:
+            StepHeader(symbol: "moon.fill", title: "A bedtime Schedule?", detail: "Lock \(blockList.name) every night. You can add more Schedules later.")
+            Toggle("Lock at bedtime", isOn: $wantsBedtime)
+            if wantsBedtime {
+                DatePicker("From", selection: $bedtimeStart.date, displayedComponents: .hourAndMinute)
+                DatePicker("Until", selection: $bedtimeEnd.date, displayedComponents: .hourAndMinute)
+            }
             Button("Continue") { step = .practice }
                 .buttonStyle(.primary)
+                .disabled(wantsBedtime && bedtime.durationMinutes < 15)
 
         case .practice:
             StepHeader(symbol: "camera.fill", title: "Try it once", detail: "Take a practice photo of grass. Touch Grass also needs to send you a notification when you tap a locked app.")
@@ -94,8 +108,12 @@ struct SetupView: View {
         _ = try? await UNUserNotificationCenter.current().requestAuthorization(options: [.alert, .sound])
     }
 
+    private var bedtime: Schedule {
+        Schedule(name: "Bedtime", blockListID: blockList.id, start: bedtimeStart, end: bedtimeEnd)
+    }
+
     private func finish() {
-        model.completeSetup(blockList: blockList, style: style)
+        model.completeSetup(blockList: blockList, style: style, bedtime: wantsBedtime ? bedtime : nil)
     }
 }
 

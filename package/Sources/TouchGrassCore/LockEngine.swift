@@ -29,13 +29,50 @@ extension AppState {
         return active.compactMap(\.pausedUntil).min()
     }
 
-    /// The next moment the set of blocked apps changes on its own: a Break ending or a Lock ending.
+    /// The next moment the set of blocked apps changes on its own: a Break ending, a Lock ending,
+    /// or waiting rule changes applying. Schedule starts have their own DeviceActivity wake-ups.
     public func nextEnforcementChange(after now: Date) -> Date? {
-        locks
-            .flatMap { [$0.pausedUntil, $0.endsAt] }
+        (locks.flatMap { [$0.pausedUntil, $0.endsAt] } + [pendingRules?.appliesAt])
             .compactMap { $0 }
             .filter { $0 > now }
             .min()
+    }
+
+    /// Brings Locks in line with the clock: applies waiting rule changes, forgets ended Locks,
+    /// and starts a Lock for every Schedule whose window is open. Safe to call repeatedly.
+    public mutating func reconcile(at now: Date, calendar: Calendar = .current) {
+        applyPendingRules(at: now)
+        pruneEndedLocks(at: now)
+        let liveSources = Set(schedules.map { LockSource.schedule($0.id) })
+        locks.removeAll { lock in
+            if case .schedule = lock.source { return !liveSources.contains(lock.source) }
+            return false
+        }
+        for schedule in schedules {
+            guard let window = schedule.window(containing: now, calendar: calendar) else { continue }
+            startAutomaticLock(source: .schedule(schedule.id), blockListID: schedule.blockListID, endsAt: window.end, at: now)
+        }
+    }
+
+    /// Starts a Schedule's Lock when iOS reports its window opening. iOS can call slightly early,
+    /// so a window opening within `tolerance` counts as open.
+    public mutating func startScheduleLock(id: UUID, at now: Date, tolerance: TimeInterval = 60, calendar: Calendar = .current) {
+        reconcile(at: now, calendar: calendar)
+        guard let schedule = schedule(id: id),
+              let window = schedule.window(containing: now.addingTimeInterval(tolerance), calendar: calendar)
+        else { return }
+        startAutomaticLock(source: .schedule(id), blockListID: schedule.blockListID, endsAt: window.end, at: now)
+    }
+
+    /// The most Schedules plus Budgets allowed. iOS monitors at most 20 activities per app,
+    /// and one is kept for wake-ups.
+    public static let maximumAutomaticRules = 18
+
+    /// The next Schedule to start, and when.
+    public func nextScheduleStart(after now: Date, calendar: Calendar = .current) -> (schedule: Schedule, start: Date)? {
+        schedules
+            .compactMap { schedule in schedule.nextStart(after: now, calendar: calendar).map { (schedule, $0) } }
+            .min { $0.1 < $1.1 }
     }
 
     /// Starts a Manual Lock. Locking a Block List that is already manually Locked does nothing.

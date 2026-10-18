@@ -30,12 +30,15 @@ struct BlockListEditor: View {
             } footer: {
                 Text("Pick whole categories to block every app in them, including ones you install later.")
             }
-            if !isNew, model.state.blockLists.count > 1 {
+            if !isNew, model.state.upcomingRules.blockLists.count > 1 {
                 Section {
                     Button("Delete Block List", role: .destructive) {
-                        model.deleteBlockList(id: draft.id)
+                        let id = draft.id
+                        model.changeRules { $0.blockLists.removeAll { $0.id == id } }
                         dismiss()
                     }
+                } footer: {
+                    Text("Schedules that use this list are deleted too.")
                 }
             }
         }
@@ -44,7 +47,14 @@ struct BlockListEditor: View {
         .toolbar {
             ToolbarItem(placement: .confirmationAction) {
                 Button("Save") {
-                    model.save(draft)
+                    let list = draft
+                    model.changeRules { rules in
+                        if let index = rules.blockLists.firstIndex(where: { $0.id == list.id }) {
+                            rules.blockLists[index] = list
+                        } else {
+                            rules.blockLists.append(list)
+                        }
+                    }
                     dismiss()
                 }
                 .disabled(frozen || draft.name.trimmingCharacters(in: .whitespaces).isEmpty || draft.itemCount == 0)

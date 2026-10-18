@@ -13,6 +13,7 @@ struct HomeView: View {
                     VStack(spacing: 28) {
                         StatusHeader(now: context.date)
                         actions(now: context.date)
+                        TodayView(now: context.date)
                         EmergencyUnlockDots(now: context.date)
                         GrassCountView(count: model.state.grassCount)
                     }
@@ -161,6 +162,24 @@ enum LockDuration: CaseIterable, Identifiable {
         case .oneHour: "For 1 hour"
         case .twoHours: "For 2 hours"
         case .fourHours: "For 4 hours"
+        }
+    }
+}
+
+/// What's coming up today.
+private struct TodayView: View {
+    @Environment(AppModel.self) private var model
+    let now: Date
+
+    var body: some View {
+        if let next = model.state.nextScheduleStart(after: now) {
+            Label {
+                Text("\(next.schedule.name) locks \(model.state.blockList(id: next.schedule.blockListID)?.name ?? "apps") \(next.start.formatted(.relative(presentation: .named)))")
+            } icon: {
+                Image(systemName: "moon.fill")
+            }
+            .font(.subheadline)
+            .foregroundStyle(.secondary)
         }
     }
 }

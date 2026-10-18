@@ -6,6 +6,7 @@ struct RulesView: View {
 
     var body: some View {
         let state = model.state
+        let rules = state.upcomingRules
         let frozen = model.settingsFrozen()
         NavigationStack {
             List {
@@ -16,8 +17,17 @@ struct RulesView: View {
                     }
                 }
 
+                if let pending = state.pendingRules {
+                    Section {
+                        Label("Some changes loosen your rules, so they take effect at \(pending.appliesAt.formatted(date: .omitted, time: .shortened)). What you see here includes them.", systemImage: "clock")
+                        Button("Cancel waiting changes", role: .destructive) {
+                            model.cancelPendingRules()
+                        }
+                    }
+                }
+
                 Section("Block Lists") {
-                    ForEach(state.blockLists) { list in
+                    ForEach(rules.blockLists) { list in
                         NavigationLink {
                             BlockListEditor(blockList: list)
                         } label: {
@@ -30,11 +40,37 @@ struct RulesView: View {
                     .disabled(frozen)
                 }
 
+                Section {
+                    ForEach(rules.schedules) { schedule in
+                        NavigationLink {
+                            ScheduleEditor(schedule: schedule, defaultBlockListID: schedule.blockListID)
+                        } label: {
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(schedule.name)
+                                    .foregroundStyle(schedule.isEnabled ? .primary : .secondary)
+                                Text(schedule.summary)
+                                    .font(.footnote)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                    if let defaultList = rules.blockLists.first {
+                        NavigationLink("New Schedule") {
+                            ScheduleEditor(schedule: nil, defaultBlockListID: rules.settings.defaultBlockListID ?? defaultList.id)
+                        }
+                        .disabled(frozen || rules.automaticRuleCount >= AppState.maximumAutomaticRules)
+                    }
+                } header: {
+                    Text("Schedules")
+                } footer: {
+                    Text("A Schedule locks its Block List during its window on the days you choose.")
+                }
+
                 Section("Settings") {
                     NavigationLink {
                         SettingsView()
                     } label: {
-                        LabeledContent("Style", value: state.settings.style.map(\.title) ?? "Custom")
+                        LabeledContent("Style", value: rules.settings.style.map(\.title) ?? "Custom")
                     }
                 }
             }
@@ -43,29 +79,21 @@ struct RulesView: View {
     }
 }
 
+extension Rules {
+    var automaticRuleCount: Int { schedules.count }
+}
+
 struct SettingsView: View {
     @Environment(AppModel.self) private var model
 
     var body: some View {
-        let settings = model.state.settings
+        let rules = model.state.upcomingRules
+        let settings = rules.settings
         Form {
-            Section {
-                Picker("Default Block List", selection: Binding(
-                    get: { model.state.defaultBlockList?.id },
-                    set: { id in model.updateSettings { $0.defaultBlockListID = id } }
-                )) {
-                    ForEach(model.state.blockLists) { list in
-                        Text(list.name).tag(Optional(list.id))
-                    }
-                }
-            } footer: {
-                Text("A Manual Lock locks this list unless you press and hold to choose another.")
-            }
-
             Section {
                 ForEach(Style.allCases, id: \.self) { style in
                     Button {
-                        model.updateSettings { $0.apply(style) }
+                        model.changeRules { $0.settings.apply(style) }
                     } label: {
                         HStack {
                             VStack(alignment: .leading, spacing: 4) {
@@ -81,10 +109,45 @@ struct SettingsView: View {
                 }
             } header: {
                 Text("Style")
+            } footer: {
+                Text("Choosing a style sets the options below. You can then change any of them on their own.")
+            }
+
+            Section("Options") {
+                Toggle("Manual Locks can have a duration", isOn: binding(\.manualLocksCanHaveDuration))
+                Toggle("Touching grass gives a Break", isOn: binding(\.touchGrassGivesBreak))
+                if settings.touchGrassGivesBreak {
+                    Picker("Break length", selection: binding(\.breakMinutes)) {
+                        ForEach(Settings.breakMinuteOptions, id: \.self) { minutes in
+                            Text("\(minutes) minutes").tag(minutes)
+                        }
+                    }
+                }
+                Toggle("Loosening waits until tomorrow", isOn: binding(\.looseningWaitsUntilTomorrow))
+            }
+
+            Section {
+                Picker("Default Block List", selection: Binding(
+                    get: { settings.defaultBlockListID ?? rules.blockLists.first?.id },
+                    set: { id in model.changeRules { $0.settings.defaultBlockListID = id } }
+                )) {
+                    ForEach(rules.blockLists) { list in
+                        Text(list.name).tag(Optional(list.id))
+                    }
+                }
+            } footer: {
+                Text("A Manual Lock locks this list unless you press and hold to choose another.")
             }
         }
         .disabled(model.settingsFrozen())
         .navigationTitle("Settings")
+    }
+
+    private func binding<Value>(_ keyPath: WritableKeyPath<Settings, Value>) -> Binding<Value> {
+        Binding(
+            get: { model.state.upcomingRules.settings[keyPath: keyPath] },
+            set: { value in model.changeRules { $0.settings[keyPath: keyPath] = value } }
+        )
     }
 }
 
@@ -99,9 +162,9 @@ extension Style {
     var summary: String {
         switch self {
         case .strict:
-            "Manual Locks last until you touch grass. Touching grass earns a 15-minute Break from Schedules and Budgets."
+            "Manual Locks last until you touch grass. Touching grass earns a Break from Schedules and Budgets. Loosening a rule waits until tomorrow."
         case .flexible:
-            "Manual Locks can have a duration. Touching grass ends Schedules and Budgets for the day."
+            "Manual Locks can have a duration. Touching grass ends Schedules and Budgets for the day. Changes apply straight away."
         }
     }
 }

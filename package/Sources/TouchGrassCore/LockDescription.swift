@@ -6,8 +6,8 @@ extension AppState {
         switch lock.source {
         case .manual:
             "a Manual Lock"
-        case .schedule:
-            "a Schedule"
+        case let .schedule(id):
+            schedule(id: id).map { "your \($0.name) Schedule" } ?? "a Schedule"
         case .budget:
             "a Budget running out"
         }
@@ -20,8 +20,8 @@ extension AppState {
         switch lock.source {
         case .manual:
             "Manual Lock"
-        case .schedule:
-            "Schedule"
+        case let .schedule(id):
+            schedule(id: id)?.name ?? "Schedule"
         case .budget:
             "Budget"
         }

@@ -13,6 +13,8 @@ final class AppModel {
     private(set) var isScreenTimeApproved = ScreenTimeAuthorization.isApproved
     /// Set when a notification from the shield asks to open the camera.
     var isShowingTouchGrass = false
+    /// Explains a rule change that didn't apply straight away.
+    var ruleChangeNotice: String?
 
     @ObservationIgnored private let store: AppStateStore
     @ObservationIgnored private let emergencyUnlockSync = EmergencyUnlockSync()
@@ -41,7 +43,7 @@ final class AppModel {
         isScreenTimeApproved = ScreenTimeAuthorization.isApproved
         let synced = emergencyUnlockSync.load()
         change(at: now) { state in
-            state.pruneEndedLocks(at: now)
+            state.reconcile(at: now)
             state.emergencyUnlocks = state.emergencyUnlocks.merged(with: synced)
         }
     }
@@ -53,12 +55,15 @@ final class AppModel {
 
     // MARK: Setup
 
-    func completeSetup(blockList: BlockList, style: Style) {
-        change { state in
+    func completeSetup(blockList: BlockList, style: Style, bedtime: Schedule?) {
+        let now = Date()
+        change(at: now) { state in
             state.blockLists = [blockList]
+            state.schedules = bedtime.map { [$0] } ?? []
             state.settings = .preset(style)
             state.settings.defaultBlockListID = blockList.id
             state.hasCompletedSetup = true
+            state.reconcile(at: now)
         }
     }
 
@@ -90,40 +95,30 @@ final class AppModel {
 
     // MARK: Rules
 
-    func save(_ blockList: BlockList) {
-        changeSettings { state in
-            if let index = state.blockLists.firstIndex(where: { $0.id == blockList.id }) {
-                state.blockLists[index] = blockList
-            } else {
-                state.blockLists.append(blockList)
-            }
+    /// Changes Block Lists, Schedules or Settings, starting from any changes already waiting.
+    /// Loosening waits for the Reset Time in Strict, and nothing changes while Locked.
+    func changeRules(_ body: (inout Rules) -> Void) {
+        let now = Date()
+        var outcome = RuleChangeOutcome.applied
+        change(at: now) { state in
+            outcome = state.changeRules(at: now, listCovers: { new, old in new.covers(old) }, body)
+            state.reconcile(at: now)
+        }
+        switch outcome {
+        case .applied:
+            ruleChangeNotice = nil
+        case let .waitingUntil(date):
+            ruleChangeNotice = "That loosens your rules, so it takes effect at \(date.formatted(date: .omitted, time: .shortened))."
+        case .refusedWhileLocked:
+            ruleChangeNotice = "Rules are frozen while you're Locked."
         }
     }
 
-    func deleteBlockList(id: UUID) {
-        changeSettings { state in
-            guard state.blockLists.count > 1 else { return }
-            state.blockLists.removeAll { $0.id == id }
-            if state.settings.defaultBlockListID == id {
-                state.settings.defaultBlockListID = state.blockLists.first?.id
-            }
-        }
-    }
-
-    func updateSettings(_ body: @escaping (inout Settings) -> Void) {
-        changeSettings { body(&$0.settings) }
+    func cancelPendingRules() {
+        change { $0.cancelPendingRules() }
     }
 
     // MARK: Private
-
-    /// Rule changes are refused while Locked.
-    private func changeSettings(_ body: @escaping (inout AppState) -> Void) {
-        let now = Date()
-        change(at: now) { state in
-            guard !state.hasActiveLocks(at: now) else { return }
-            body(&state)
-        }
-    }
 
     private func change(at now: Date = .now, _ body: (inout AppState) -> Void) {
         state = store.update(body)
@@ -132,6 +127,7 @@ final class AppModel {
 
     private func enforce(at now: Date) {
         Enforcement.sync(state, at: now)
+        Enforcement.syncActivities(for: state)
         scheduleRefresh(after: now)
     }
 
