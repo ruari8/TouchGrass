@@ -17,8 +17,13 @@ struct BlockListEntity: AppEntity {
 }
 
 struct BlockListQuery: EntityQuery {
+    /// A Shortcut saved with a list that has since been deleted still resolves, so `LockIntent`
+    /// can say the list is gone instead of the Shortcut failing before it runs.
     func entities(for identifiers: [UUID]) async throws -> [BlockListEntity] {
-        try await suggestedEntities().filter { identifiers.contains($0.id) }
+        let existing = try await suggestedEntities()
+        return identifiers.map { id in
+            existing.first { $0.id == id } ?? BlockListEntity(id: id, name: "Deleted Block List")
+        }
     }
 
     func suggestedEntities() async throws -> [BlockListEntity] {

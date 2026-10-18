@@ -79,14 +79,22 @@ extension Enforcement {
     /// the later of the registration and the start of the Budget day, so a genuine callback can't
     /// arrive before the Budget's minutes have passed on the clock. An earlier one is ignored and the
     /// Budget re-registered, which never Locks wrongly but restarts today's count.
-    public static func shouldLockForBudgetThreshold(_ budgetID: UUID, in state: AppState, at now: Date = .now) -> Bool {
-        guard let budget = state.budget(id: budgetID), budget.isEnabled else { return false }
-        let dayStart = state.budgetDay(containing: now).start
-        let countingSince = max(dayStart, BudgetActivities.Registration.registeredAt(budgetID) ?? dayStart)
-        let earliestGenuine = countingSince.addingTimeInterval(TimeInterval(budget.minutes * 60) - thresholdTolerance)
-        guard now < earliestGenuine else { return true }
-        BudgetActivities.register(budget, in: state, center: DeviceActivityCenter())
-        return false
+    public static func shouldLockForBudgetThreshold(_ budgetID: UUID, using store: AppStateStore, at now: Date = .now) -> Bool {
+        var shouldLock = false
+        // Judged and re-registered under the bookings lock with the latest state, so a Budget edit
+        // booked at the same moment can't be overwritten with the old threshold.
+        try? store.withLatestState(lockName: "bookings") { state in
+            guard let budget = state.budget(id: budgetID), budget.isEnabled else { return }
+            let dayStart = state.budgetDay(containing: now).start
+            let countingSince = max(dayStart, BudgetActivities.Registration.registeredAt(budgetID) ?? dayStart)
+            let earliestGenuine = countingSince.addingTimeInterval(TimeInterval(budget.minutes * 60) - thresholdTolerance)
+            if now >= earliestGenuine {
+                shouldLock = true
+            } else {
+                BudgetActivities.register(budget, in: state, center: DeviceActivityCenter())
+            }
+        }
+        return shouldLock
     }
 
     static let thresholdTolerance: TimeInterval = 30

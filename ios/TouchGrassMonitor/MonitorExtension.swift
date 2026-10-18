@@ -31,9 +31,9 @@ final class MonitorExtension: DeviceActivityMonitor {
 
     override func eventDidReachThreshold(_ event: DeviceActivityEvent.Name, activity: DeviceActivityName) {
         super.eventDidReachThreshold(event, activity: activity)
-        guard let id = activity.budgetID, let state = try? store.load() else { return }
+        guard let id = activity.budgetID else { return }
         let now = Date()
-        guard Enforcement.shouldLockForBudgetThreshold(id, in: state, at: now) else { return }
+        guard Enforcement.shouldLockForBudgetThreshold(id, using: store, at: now) else { return }
         update(at: now) { $0.startBudgetLock(id: id, at: now) }
     }
 
