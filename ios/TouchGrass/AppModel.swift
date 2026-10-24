@@ -23,6 +23,8 @@ final class AppModel {
     @ObservationIgnored private let store: AppStateStore
     @ObservationIgnored private let emergencyUnlockSync = EmergencyUnlockSync()
     @ObservationIgnored private var refreshTask: Task<Void, Never>?
+    /// DeviceActivity bookings are synchronous XPC that can take seconds, so they run here, in order.
+    @ObservationIgnored private let bookings = DispatchQueue(label: "TouchGrass.bookings", qos: .userInitiated)
 
     init(store: AppStateStore = AppStateStore()) {
         self.store = store
@@ -170,7 +172,8 @@ final class AppModel {
     private func change(at now: Date = .now, _ body: (inout AppState) throws -> Void) -> Bool {
         do {
             state = try store.update(body) { Enforcement.applyShields(for: $0, at: now) }
-            Enforcement.scheduleBackgroundWork(using: store, at: now)
+            let store = store
+            bookings.async { Enforcement.scheduleBackgroundWork(using: store, at: now) }
             scheduleRefresh(after: now)
             return true
         } catch EmergencyUnlockError.noneLeft {

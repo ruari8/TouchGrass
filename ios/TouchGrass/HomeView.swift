@@ -9,13 +9,17 @@ struct HomeView: View {
 
     var body: some View {
         NavigationStack {
-            TimelineView(.periodic(from: .now, by: 1)) { context in
+            // The Break countdown ticks on its own and the model refreshes when Locks change, so this
+            // only keeps relative times current. It reads the clock rather than the timeline's date,
+            // which is stale when a model change redraws the screen between ticks.
+            TimelineView(.everyMinute) { _ in
+                let now = Date.now
                 ScrollView {
                     VStack(spacing: 28) {
-                        StatusHeader(now: context.date)
-                        actions(now: context.date)
-                        TodayView(now: context.date)
-                        EmergencyUnlockDots(now: context.date)
+                        StatusHeader(now: now)
+                        actions(now: now)
+                        TodayView(now: now)
+                        EmergencyUnlockDots(now: now)
                         GrassCountView(count: model.state.grassCount)
                     }
                     .padding(24)

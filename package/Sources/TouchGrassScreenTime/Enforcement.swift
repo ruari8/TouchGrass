@@ -13,13 +13,19 @@ import TouchGrassCore
 /// the monitor extension, which would otherwise wait on a file this process is holding.
 public enum Enforcement {
     /// Books the DeviceActivity work that changes shields later: the next wake-up, and one activity
-    /// per Schedule and Budget. Call after the state file is released. Bookings always use the latest
-    /// saved state under their own lock, so two processes booking in the wrong order can't restore
-    /// an older snapshot.
+    /// per Schedule and Budget. Call after the state file is released, and off the main thread in
+    /// the app, because DeviceActivity calls are synchronous XPC that can take seconds.
+    ///
+    /// No lock is held while booking: DeviceActivity calls can wait on the monitor extension, which
+    /// books too, so a shared lock deadlocks both processes. Instead, if another process saved a
+    /// change while this one was booking, it books again, so the last booking matches the saved state.
     public static func scheduleBackgroundWork(using store: AppStateStore, at now: Date = .now) {
-        try? store.withLatestState(lockName: "bookings") { state in
+        var booked: AppState?
+        for _ in 0..<3 {
+            guard let state = try? store.load(), state != booked else { return }
             scheduleWakeup(for: state, at: now)
             syncActivities(for: state)
+            booked = state
         }
     }
 

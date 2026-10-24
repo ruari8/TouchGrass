@@ -1,6 +1,6 @@
 # Touch Grass
 
-[![CI](https://github.com/ruari8/blockos/actions/workflows/ci.yml/badge.svg)](https://github.com/ruari8/blockos/actions/workflows/ci.yml)
+[![CI](https://github.com/ruari8/TouchGrass/actions/workflows/ci.yml/badge.svg)](https://github.com/ruari8/TouchGrass/actions/workflows/ci.yml)
 
 Brick without the brick. Touch Grass locks your distracting apps, and the only normal way out is to go outside and take a photo of real grass.
 

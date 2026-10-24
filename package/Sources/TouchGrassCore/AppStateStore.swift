@@ -46,25 +46,6 @@ public final class AppStateStore: Sendable {
         return try result.get()
     }
 
-    /// Runs `body` with the latest saved state while holding a separate lock, so work derived from
-    /// the state (such as DeviceActivity bookings) done by different processes can't land out of order.
-    /// The state file itself isn't held, so `body` can trigger callbacks that update it.
-    public func withLatestState(lockName: String, _ body: (AppState) -> Void) throws {
-        let lockURL = fileURL.deletingLastPathComponent().appending(path: "\(lockName).lock")
-        let coordinator = NSFileCoordinator()
-        var coordinationError: NSError?
-        var loadError: Error?
-        coordinator.coordinate(writingItemAt: lockURL, options: [], error: &coordinationError) { _ in
-            do {
-                body(try load())
-            } catch {
-                loadError = error
-            }
-        }
-        if let coordinationError { throw StoreError.coordination(coordinationError) }
-        if let loadError { throw loadError }
-    }
-
     private func coordinate(writing: Bool, _ body: (URL) -> Void) throws {
         let coordinator = NSFileCoordinator()
         var error: NSError?
